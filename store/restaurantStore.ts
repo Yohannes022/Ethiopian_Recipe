@@ -3,8 +3,8 @@
  * Manages restaurant listings, menu items, and related data
  */
 
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Restaurant, MenuItem, Review } from "@/types/restaurant";
 import { restaurants as mockRestaurants, menuItems as mockMenuItems, reviews as mockReviews } from "@/mocks/restaurants";

@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from "react-native";
 import { CreditCard, Smartphone, DollarSign, Plus } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { usePaymentStore } from "@/store/paymentStore";
 

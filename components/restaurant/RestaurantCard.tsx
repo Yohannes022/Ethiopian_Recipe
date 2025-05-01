@@ -14,7 +14,7 @@ import {
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Star, Clock, MapPin } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { Restaurant } from "@/types/restaurant";
 

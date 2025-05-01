@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { ChevronRight } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { useAuthStore } from "@/store/authStore";
 
@@ -66,19 +66,21 @@ export default function CreateScreen() {
 
       <View style={styles.tipsContainer}>
         <Text style={styles.tipsTitle}>Tips for great recipes</Text>
-        
+
         <View style={styles.tipItem}>
           <View style={styles.tipNumber}>
             <Text style={styles.tipNumberText}>1</Text>
           </View>
           <View style={styles.tipContent}>
-            <Text style={styles.tipItemTitle}>Be specific with ingredients</Text>
+            <Text style={styles.tipItemTitle}>
+              Be specific with ingredients
+            </Text>
             <Text style={styles.tipItemText}>
               Include exact measurements and any substitutions
             </Text>
           </View>
         </View>
-        
+
         <View style={styles.tipItem}>
           <View style={styles.tipNumber}>
             <Text style={styles.tipNumberText}>2</Text>
@@ -90,7 +92,7 @@ export default function CreateScreen() {
             </Text>
           </View>
         </View>
-        
+
         <View style={styles.tipItem}>
           <View style={styles.tipNumber}>
             <Text style={styles.tipNumberText}>3</Text>

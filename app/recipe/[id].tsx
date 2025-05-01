@@ -23,7 +23,7 @@ import {
   Edit,
   Trash2,
 } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { useRecipeStore } from "@/store/recipeStore";
 import { useAuthStore } from "@/store/authStore";
@@ -121,10 +121,7 @@ export default function RecipeDetailScreen() {
 
           {showOptions && isOwner && (
             <View style={styles.optionsMenu}>
-              <TouchableOpacity
-                style={styles.optionItem}
-                onPress={handleEdit}
-              >
+              <TouchableOpacity style={styles.optionItem} onPress={handleEdit}>
                 <Edit size={20} color={colors.text} />
                 <Text style={styles.optionText}>Edit Recipe</Text>
               </TouchableOpacity>
@@ -183,7 +180,7 @@ export default function RecipeDetailScreen() {
                   recipe.isLiked && { color: colors.primary },
                 ]}
               >
-                {recipe.likes}
+                {recipe.likes || 0}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -204,10 +201,7 @@ export default function RecipeDetailScreen() {
                 Save
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={handleShare}
-            >
+            <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
               <Share2 size={20} color={colors.lightText} />
               <Text style={styles.actionText}>Share</Text>
             </TouchableOpacity>
@@ -231,7 +225,7 @@ export default function RecipeDetailScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.tagsScrollContent}
             >
-              {recipe.tags.map((tag) => (
+              {(recipe.tags ?? []).map((tag) => (
                 <CategoryPill
                   key={tag}
                   title={tag}
@@ -266,7 +260,7 @@ export default function RecipeDetailScreen() {
                   <Text style={styles.stepText}>{step.description}</Text>
                   {step.imageUrl && (
                     <Image
-                      source={{ uri: step.imageUrl }}
+                      source={{ uri: step.imageUrl || "" }}
                       style={styles.stepImage}
                       contentFit="cover"
                     />
@@ -404,8 +398,7 @@ const styles = StyleSheet.create({
   metaDifficulty: {
     paddingHorizontal: 12,
     paddingVertical: 4,
-    backgroundColor:
-      colors.accent + "33", // Adding transparency
+    backgroundColor: colors.accent + "33", // Adding transparency
     borderRadius: 12,
   },
   difficultyText: {

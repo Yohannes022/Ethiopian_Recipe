@@ -1,4 +1,15 @@
-import { User } from "@/types/recipe";
+export interface User {
+    id: string;
+    name: string;
+    phone: string;
+    avatar: string; // Added avatar property
+    bio: string;
+    location: string;
+    recipes: string[];
+    savedRecipes: string[];
+    followers: number;
+    following: number;
+}
 
 export const users: User[] = [
   {

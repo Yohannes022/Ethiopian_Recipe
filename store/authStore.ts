@@ -4,8 +4,8 @@
  * Handles login, verification, and user role management
  */
 
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User, UserRole } from "@/types/recipe";
 import { currentUser as mockUser } from "@/mocks/users";

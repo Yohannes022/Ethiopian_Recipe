@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { Minus, Plus, Trash2 } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { CartItem as CartItemType } from "@/types/restaurant";
 

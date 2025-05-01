@@ -19,7 +19,7 @@ import {
 } from "react-native";
 import { useRouter, Stack } from "expo-router";
 import { MapPin, CreditCard, DollarSign, Smartphone } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import Button from "@/components/Button";
 import PaymentMethodSelector from "@/components/restaurant/PaymentMethodSelector";

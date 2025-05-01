@@ -5,8 +5,8 @@
  * Provides order history and active order tracking
  */
 
-import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CartItem, Order, OrderStatus, MenuItem, Location } from "@/types/restaurant";
 import { mockOrders, deliveryPeople } from "@/mocks/restaurants";

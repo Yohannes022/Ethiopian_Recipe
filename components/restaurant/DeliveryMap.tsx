@@ -13,7 +13,7 @@ import {
   Dimensions,
   Platform,
 } from "react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { Location } from "@/types/restaurant";
 

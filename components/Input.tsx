@@ -10,7 +10,7 @@ import {
   KeyboardTypeOptions,
 } from "react-native";
 import { Eye, EyeOff } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 
 interface InputProps {

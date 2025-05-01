@@ -7,7 +7,7 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 
 interface ButtonProps {
@@ -45,6 +45,7 @@ export default function Button({
   const textStyles = [
     typography.button,
     styles.text,
+    styles.textAlignCenter,
     styles[`${variant}Text`],
     textStyle,
   ];
@@ -107,7 +108,7 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
-  text: {
+  textAlignCenter: {
     textAlign: "center",
   },
   primaryText: {

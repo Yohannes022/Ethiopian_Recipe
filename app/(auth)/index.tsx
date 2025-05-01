@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, Image, SafeAreaView } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Button from "@/components/Button";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 
 export default function WelcomeScreen() {
@@ -21,12 +21,12 @@ export default function WelcomeScreen() {
         }}
         style={styles.backgroundImage}
       />
-      
+
       <LinearGradient
         colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.9)"]}
         style={styles.gradient}
       />
-      
+
       <SafeAreaView style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>Ethiopian Recipe Share</Text>
@@ -34,7 +34,7 @@ export default function WelcomeScreen() {
             Discover, create and share authentic Ethiopian recipes
           </Text>
         </View>
-        
+
         <View style={styles.features}>
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
@@ -47,7 +47,7 @@ export default function WelcomeScreen() {
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
               <Text style={styles.featureEmoji}>👨‍🍳</Text>
@@ -59,7 +59,7 @@ export default function WelcomeScreen() {
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.featureItem}>
             <View style={styles.featureIcon}>
               <Text style={styles.featureEmoji}>💬</Text>
@@ -72,7 +72,7 @@ export default function WelcomeScreen() {
             </View>
           </View>
         </View>
-        
+
         <View style={styles.footer}>
           <Button
             title="Get Started"

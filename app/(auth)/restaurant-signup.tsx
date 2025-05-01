@@ -17,16 +17,26 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { ChevronLeft, Camera, MapPin, Clock } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import Button from "@/components/Button";
 import Input from "@/components/Input";
 import { useAuthStore } from "@/store/authStore";
 
+export interface InputProps {
+  label: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
+  required?: boolean;
+  icon?: React.ReactNode; // Add the icon prop
+  // Other props...
+}
+
 export default function RestaurantSignupScreen() {
   const router = useRouter();
   const { registerRestaurantOwner, isLoading } = useAuthStore();
-  
+
   // Form state
   const [restaurantName, setRestaurantName] = useState("");
   const [description, setDescription] = useState("");
@@ -37,7 +47,7 @@ export default function RestaurantSignupScreen() {
   const [closingTime, setClosingTime] = useState("22:00");
   const [cuisineTypes, setCuisineTypes] = useState("");
   const [step, setStep] = useState(1);
-  
+
   /**
    * Handle next step in registration process
    * Validates current step before proceeding
@@ -45,19 +55,25 @@ export default function RestaurantSignupScreen() {
   const handleNext = () => {
     if (step === 1) {
       if (!restaurantName || !description || !cuisineTypes) {
-        Alert.alert("Missing Information", "Please fill in all required fields");
+        Alert.alert(
+          "Missing Information",
+          "Please fill in all required fields"
+        );
         return;
       }
       setStep(2);
     } else if (step === 2) {
       if (!address || !phone) {
-        Alert.alert("Missing Information", "Please fill in all required fields");
+        Alert.alert(
+          "Missing Information",
+          "Please fill in all required fields"
+        );
         return;
       }
       setStep(3);
     }
   };
-  
+
   /**
    * Handle back navigation
    * Goes to previous step or back to previous screen
@@ -69,7 +85,7 @@ export default function RestaurantSignupScreen() {
       router.back();
     }
   };
-  
+
   /**
    * Handle form submission
    * Collects all data and submits registration
@@ -80,16 +96,16 @@ export default function RestaurantSignupScreen() {
       const restaurantData = {
         name: restaurantName,
         description,
-        cuisineType: cuisineTypes.split(",").map(cuisine => cuisine.trim()),
+        cuisineType: cuisineTypes.split(",").map((cuisine) => cuisine.trim()),
         address,
         phone,
         email,
         openingHours: {
           open: openingTime,
-          close: closingTime
-        }
+          close: closingTime,
+        },
       };
-      
+
       await registerRestaurantOwner(restaurantData);
       Alert.alert(
         "Registration Submitted",
@@ -100,7 +116,7 @@ export default function RestaurantSignupScreen() {
       Alert.alert("Registration Failed", "Please try again later");
     }
   };
-  
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -114,7 +130,7 @@ export default function RestaurantSignupScreen() {
         <Text style={styles.headerTitle}>Restaurant Registration</Text>
         <View style={styles.placeholder} />
       </View>
-      
+
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -142,7 +158,7 @@ export default function RestaurantSignupScreen() {
             </View>
           ))}
         </View>
-        
+
         {/* Step title */}
         <Text style={styles.stepTitle}>
           {step === 1
@@ -151,23 +167,24 @@ export default function RestaurantSignupScreen() {
             ? "Location & Contact"
             : "Hours & Verification"}
         </Text>
-        
+
         {/* Step 1: Basic restaurant information */}
         {step === 1 && (
           <View style={styles.formContainer}>
             <TouchableOpacity style={styles.imageUploadContainer}>
               <Camera size={32} color={colors.primary} />
-              <Text style={styles.imageUploadText}>Upload Restaurant Photo</Text>
+              <Text style={styles.imageUploadText}>
+                Upload Restaurant Photo
+              </Text>
             </TouchableOpacity>
-            
+
             <Input
               label="Restaurant Name"
               value={restaurantName}
               onChangeText={setRestaurantName}
               placeholder="Enter your restaurant name"
-              required
             />
-            
+
             <Input
               label="Description"
               value={description}
@@ -175,19 +192,17 @@ export default function RestaurantSignupScreen() {
               placeholder="Tell customers about your restaurant"
               multiline
               numberOfLines={4}
-              required
             />
-            
+
             <Input
               label="Cuisine Types"
               value={cuisineTypes}
               onChangeText={setCuisineTypes}
               placeholder="Ethiopian, Vegetarian, etc. (comma separated)"
-              required
             />
           </View>
         )}
-        
+
         {/* Step 2: Location and contact information */}
         {step === 2 && (
           <View style={styles.formContainer}>
@@ -196,19 +211,18 @@ export default function RestaurantSignupScreen() {
               value={address}
               onChangeText={setAddress}
               placeholder="Full restaurant address"
-              icon={<MapPin size={20} color={colors.primary} />}
-              required
+              // required
             />
-            
+
             <Input
               label="Phone Number"
               value={phone}
               onChangeText={setPhone}
               placeholder="+251 XX XXX XXXX"
               keyboardType="phone-pad"
-              required
+              // required
             />
-            
+
             <Input
               label="Email (Optional)"
               value={email}
@@ -218,7 +232,7 @@ export default function RestaurantSignupScreen() {
             />
           </View>
         )}
-        
+
         {/* Step 3: Hours and verification */}
         {step === 3 && (
           <View style={styles.formContainer}>
@@ -226,35 +240,42 @@ export default function RestaurantSignupScreen() {
               <Text style={styles.inputLabel}>Opening Hours</Text>
               <View style={styles.hoursRow}>
                 <View style={styles.hourInputContainer}>
-                  <Clock size={20} color={colors.primary} style={styles.hourIcon} />
+                  <Clock
+                    size={20}
+                    color={colors.primary}
+                    style={styles.hourIcon}
+                  />
+                  <View style={styles.hourInput}>
+                    <Input
+                      value={openingTime}
+                      onChangeText={setOpeningTime}
+                      placeholder="08:00"
+                      label=""
+                    />
+                  </View>
+                </View>
+                <View style={styles.hourInput}>
                   <Input
-                    value={openingTime}
-                    onChangeText={setOpeningTime}
-                    placeholder="08:00"
-                    containerStyle={styles.hourInput}
+                    value={closingTime}
+                    onChangeText={setClosingTime}
+                    placeholder="22:00"
                     label=""
                   />
                 </View>
-                <Text style={styles.hoursSeparator}>to</Text>
-                <Input
-                  value={closingTime}
-                  onChangeText={setClosingTime}
-                  placeholder="22:00"
-                  containerStyle={styles.hourInput}
-                  label=""
-                />
               </View>
             </View>
-            
+
             <View style={styles.verificationContainer}>
               <Text style={styles.verificationTitle}>Verification</Text>
               <Text style={styles.verificationText}>
-                To complete your registration, we'll need to verify your restaurant.
-                Please have the following ready:
+                To complete your registration, we'll need to verify your
+                restaurant. Please have the following ready:
               </Text>
               <View style={styles.verificationItem}>
                 <View style={styles.verificationBullet} />
-                <Text style={styles.verificationItemText}>Business license</Text>
+                <Text style={styles.verificationItemText}>
+                  Business license
+                </Text>
               </View>
               <View style={styles.verificationItem}>
                 <View style={styles.verificationBullet} />
@@ -262,12 +283,14 @@ export default function RestaurantSignupScreen() {
               </View>
               <View style={styles.verificationItem}>
                 <View style={styles.verificationBullet} />
-                <Text style={styles.verificationItemText}>Tax registration document</Text>
+                <Text style={styles.verificationItemText}>
+                  Tax registration document
+                </Text>
               </View>
             </View>
           </View>
         )}
-        
+
         {/* Footer with navigation buttons */}
         <View style={styles.footer}>
           {step < 3 ? (

@@ -31,7 +31,7 @@ import {
   Bookmark,
   Info,
 } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import Button from "@/components/Button";
 import MenuItemCard from "@/components/restaurant/MenuItemCard";

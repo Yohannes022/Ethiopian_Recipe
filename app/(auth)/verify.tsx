@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import Button from "@/components/Button";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { useAuthStore } from "@/store/authStore";
 
@@ -37,11 +37,11 @@ export default function VerifyScreen() {
     if (text.length > 1) {
       text = text[0];
     }
-    
+
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
-    
+
     // Auto-focus next input
     if (text && index < 5) {
       inputRefs.current[index + 1]?.focus();
@@ -62,7 +62,7 @@ export default function VerifyScreen() {
   const handleVerify = async () => {
     const otpString = otp.join("");
     if (otpString.length !== 6) return;
-    
+
     try {
       await verifyOtp(otpString);
       router.replace("/(tabs)");

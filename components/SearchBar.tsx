@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, View, TextInput, TouchableOpacity } from "react-native";
 import { Search, X } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 
 interface SearchBarProps {

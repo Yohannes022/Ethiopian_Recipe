@@ -9,7 +9,7 @@ import {
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Clock, Users, Heart, Bookmark } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { Recipe } from "@/types/recipe";
 import { useRecipeStore } from "@/store/recipeStore";

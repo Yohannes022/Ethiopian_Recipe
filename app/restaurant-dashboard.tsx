@@ -27,7 +27,7 @@ import {
   ChevronRight,
   Star,
 } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import Button from "@/components/Button";
 import { useAuthStore } from "@/store/authStore";
@@ -373,7 +373,6 @@ export default function RestaurantDashboardScreen() {
                 title="Add Item"
                 onPress={handleAddMenuItem}
                 variant="primary"
-                icon={<Plus size={16} color={colors.white} />}
               />
             </View>
             
@@ -855,7 +854,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   pendingBadge: {
-    backgroundColor: colors.warning + "20",
+    backgroundColor: colors.error + "20",
   },
   preparingBadge: {
     backgroundColor: colors.primary + "20",

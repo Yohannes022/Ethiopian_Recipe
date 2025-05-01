@@ -15,13 +15,15 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { User, Store, ChevronRight } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import Button from "@/components/Button";
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<"customer" | "restaurant_owner" | null>(null);
+  const [selectedRole, setSelectedRole] = useState<
+    "customer" | "restaurant_owner" | null
+  >(null);
 
   const handleRoleSelect = (role: "customer" | "restaurant_owner") => {
     setSelectedRole(role);
@@ -65,12 +67,15 @@ export default function RegisterScreen() {
             <View style={styles.roleContent}>
               <Text style={styles.roleName}>Customer</Text>
               <Text style={styles.roleDescription}>
-                Order food from restaurants, discover recipes, and share your own creations
+                Order food from restaurants, discover recipes, and share your
+                own creations
               </Text>
             </View>
             <ChevronRight
               size={24}
-              color={selectedRole === "customer" ? colors.primary : colors.lightText}
+              color={
+                selectedRole === "customer" ? colors.primary : colors.lightText
+              }
             />
           </TouchableOpacity>
 
@@ -92,7 +97,11 @@ export default function RegisterScreen() {
             </View>
             <ChevronRight
               size={24}
-              color={selectedRole === "restaurant_owner" ? colors.primary : colors.lightText}
+              color={
+                selectedRole === "restaurant_owner"
+                  ? colors.primary
+                  : colors.lightText
+              }
             />
           </TouchableOpacity>
         </View>
@@ -110,7 +119,8 @@ export default function RegisterScreen() {
             onPress={() => router.push("/login")}
           >
             <Text style={styles.loginLinkText}>
-              Already have an account? <Text style={styles.loginLinkTextBold}>Log in</Text>
+              Already have an account?{" "}
+              <Text style={styles.loginLinkTextBold}>Log in</Text>
             </Text>
           </TouchableOpacity>
         </View>

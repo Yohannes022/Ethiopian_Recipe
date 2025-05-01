@@ -1,4 +1,24 @@
-import { Recipe } from "@/types/recipe";
+export interface Recipe {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  prepTime: number;
+  cookTime: number;
+  servings: number;
+  difficulty: string;
+  ingredients: { id: string; name: string; amount: string; unit: string }[];
+  steps: { id: string; description: string }[];
+  region: string;
+  tags: string[];
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  createdAt: string;
+  likes: number;
+  isLiked: boolean;
+  isSaved: boolean;
+}
 
 export const recipes: Recipe[] = [
   {

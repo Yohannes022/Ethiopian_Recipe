@@ -12,7 +12,7 @@ import {
   Text,
 } from "react-native";
 import { Check } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { OrderStatus } from "@/types/restaurant";
 

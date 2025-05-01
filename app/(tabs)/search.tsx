@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Filter } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import SearchBar from "@/components/SearchBar";
 import RecipeCard from "@/components/RecipeCard";
@@ -72,11 +72,7 @@ export default function SearchScreen() {
         >
           <Filter
             size={20}
-            color={
-              selectedTag || selectedRegion
-                ? colors.white
-                : colors.text
-            }
+            color={selectedTag || selectedRegion ? colors.white : colors.text}
           />
         </TouchableOpacity>
       </View>

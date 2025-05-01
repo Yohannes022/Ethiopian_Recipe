@@ -16,16 +16,16 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { Image } from "expo-image";
-import { 
-  ChevronLeft, 
-  Phone, 
-  MessageCircle, 
-  Clock, 
+import {
+  ChevronLeft,
+  Phone,
+  MessageCircle,
+  Clock,
   MapPin,
   CheckCircle,
-  XCircle
+  XCircle,
 } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import Button from "@/components/Button";
 import OrderStatusTracker from "@/components/restaurant/OrderStatusTracker";
@@ -41,28 +41,28 @@ export default function OrderTrackingScreen() {
   const { getOrderById, cancelOrder } = useOrderStore();
   const { getRestaurantById } = useRestaurantStore();
   const { userLocation } = useLocationStore();
-  
+
   const order = getOrderById(id);
   const restaurant = order ? getRestaurantById(order.restaurantId) : null;
-  
+
   const [isCancelling, setIsCancelling] = useState(false);
-  
+
   // Redirect if order not found
   useEffect(() => {
     if (!order) {
       router.replace("/profile");
     }
   }, [order]);
-  
+
   if (!order || !restaurant || !userLocation) {
     return null;
   }
-  
+
   // Get delivery person info
-  const deliveryPerson = order.deliveryPersonId 
-    ? deliveryPeople.find(dp => dp.id === order.deliveryPersonId)
+  const deliveryPerson = order.deliveryPersonId
+    ? deliveryPeople.find((dp) => dp.id === order.deliveryPersonId)
     : null;
-  
+
   /**
    * Handle order cancellation with confirmation
    */
@@ -70,48 +70,47 @@ export default function OrderTrackingScreen() {
     if (order.status === "delivered" || order.status === "cancelled") {
       return;
     }
-    
-    Alert.alert(
-      "Cancel Order",
-      "Are you sure you want to cancel this order?",
-      [
-        {
-          text: "No",
-          style: "cancel"
+
+    Alert.alert("Cancel Order", "Are you sure you want to cancel this order?", [
+      {
+        text: "No",
+        style: "cancel",
+      },
+      {
+        text: "Yes, Cancel",
+        onPress: async () => {
+          setIsCancelling(true);
+          try {
+            await cancelOrder(order.id);
+            Alert.alert(
+              "Order Cancelled",
+              "Your order has been cancelled successfully."
+            );
+          } catch (error) {
+            Alert.alert("Error", "Failed to cancel order. Please try again.");
+          } finally {
+            setIsCancelling(false);
+          }
         },
-        {
-          text: "Yes, Cancel",
-          onPress: async () => {
-            setIsCancelling(true);
-            try {
-              await cancelOrder(order.id);
-              Alert.alert("Order Cancelled", "Your order has been cancelled successfully.");
-            } catch (error) {
-              Alert.alert("Error", "Failed to cancel order. Please try again.");
-            } finally {
-              setIsCancelling(false);
-            }
-          },
-          style: "destructive"
-        }
-      ]
-    );
+        style: "destructive",
+      },
+    ]);
   };
-  
+
   /**
    * Format date string to readable time
    */
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
-  
+
   // Determine if order can be cancelled
   const canCancel = !["delivered", "cancelled"].includes(order.status);
 
   return (
     <View style={styles.container}>
-      <Stack.Screen 
+      <Stack.Screen
         options={{
           title: `Order #${order.id.slice(-4)}`,
           headerLeft: () => (
@@ -124,50 +123,54 @@ export default function OrderTrackingScreen() {
           ),
         }}
       />
-      
+
       <ScrollView style={styles.content}>
         {/* Order status tracker */}
         <View style={styles.statusContainer}>
           <OrderStatusTracker currentStatus={order.status} />
         </View>
-        
+
         {/* Delivery map - only shown when order is out for delivery */}
-        {order.status === "out_for_delivery" && order.deliveryPersonLocation && (
-          <View style={styles.mapContainer}>
-            <DeliveryMap
-              restaurantLocation={restaurant.location}
-              deliveryPersonLocation={order.deliveryPersonLocation}
-              userLocation={order.deliveryAddress}
-              estimatedTime={order.estimatedDeliveryTime}
-            />
-            
-            {/* Delivery person info */}
-            {deliveryPerson && (
-              <View style={styles.deliveryPersonContainer}>
-                <Image
-                  source={{ uri: deliveryPerson.avatar }}
-                  style={styles.deliveryPersonAvatar}
-                  contentFit="cover"
-                />
-                <View style={styles.deliveryPersonInfo}>
-                  <Text style={styles.deliveryPersonName}>{deliveryPerson.name}</Text>
-                  <Text style={styles.deliveryPersonMeta}>
-                    {deliveryPerson.completedDeliveries} deliveries • {deliveryPerson.rating} ★
-                  </Text>
+        {order.status === "out_for_delivery" &&
+          order.deliveryPersonLocation && (
+            <View style={styles.mapContainer}>
+              <DeliveryMap
+                restaurantLocation={restaurant.location}
+                deliveryPersonLocation={order.deliveryPersonLocation}
+                userLocation={order.deliveryAddress}
+                estimatedTime={order.estimatedDeliveryTime}
+              />
+
+              {/* Delivery person info */}
+              {deliveryPerson && (
+                <View style={styles.deliveryPersonContainer}>
+                  <Image
+                    source={{ uri: deliveryPerson.avatar }}
+                    style={styles.deliveryPersonAvatar}
+                    contentFit="cover"
+                  />
+                  <View style={styles.deliveryPersonInfo}>
+                    <Text style={styles.deliveryPersonName}>
+                      {deliveryPerson.name}
+                    </Text>
+                    <Text style={styles.deliveryPersonMeta}>
+                      {deliveryPerson.completedDeliveries} deliveries •{" "}
+                      {deliveryPerson.rating} ★
+                    </Text>
+                  </View>
+                  <View style={styles.deliveryPersonActions}>
+                    <TouchableOpacity style={styles.deliveryPersonAction}>
+                      <Phone size={20} color={colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.deliveryPersonAction}>
+                      <MessageCircle size={20} color={colors.primary} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-                <View style={styles.deliveryPersonActions}>
-                  <TouchableOpacity style={styles.deliveryPersonAction}>
-                    <Phone size={20} color={colors.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.deliveryPersonAction}>
-                    <MessageCircle size={20} color={colors.primary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
-        )}
-        
+              )}
+            </View>
+          )}
+
         {/* Restaurant information */}
         <View style={styles.restaurantContainer}>
           <Image
@@ -191,37 +194,43 @@ export default function OrderTrackingScreen() {
             </View>
           </View>
         </View>
-        
+
         {/* Order details section */}
         <View style={styles.orderDetailsContainer}>
           <Text style={styles.sectionTitle}>Order Details</Text>
-          
+
           {/* Order items */}
           {order.items.map((item) => (
             <View key={item.id} style={styles.orderItem}>
               <View style={styles.orderItemQuantity}>
-                <Text style={styles.orderItemQuantityText}>{item.quantity}x</Text>
+                <Text style={styles.orderItemQuantityText}>
+                  {item.quantity}x
+                </Text>
               </View>
               <View style={styles.orderItemInfo}>
                 <Text style={styles.orderItemName}>{item.menuItem.name}</Text>
                 {item.selectedOptions && item.selectedOptions.length > 0 && (
                   <Text style={styles.orderItemOptions}>
-                    {item.selectedOptions.map((option) => {
-                      const optionDetails = item.menuItem.options?.find(
-                        (opt) => opt.id === option.optionId
-                      );
-                      
-                      if (!optionDetails) return null;
-                      
-                      const choiceNames = option.choiceIds.map((choiceId) => {
-                        const choice = optionDetails.choices.find(
-                          (c) => c.id === choiceId
+                    {item.selectedOptions
+                      .map((option) => {
+                        const optionDetails = item.menuItem.options?.find(
+                          (opt) => opt.id === option.optionId
                         );
-                        return choice?.name || "";
-                      });
-                      
-                      return `${optionDetails.name}: ${choiceNames.join(", ")}`;
-                    }).join(", ")}
+
+                        if (!optionDetails) return null;
+
+                        const choiceNames = option.choiceIds.map((choiceId) => {
+                          const choice = optionDetails.choices.find(
+                            (c) => c.id === choiceId
+                          );
+                          return choice?.name || "";
+                        });
+
+                        return `${optionDetails.name}: ${choiceNames.join(
+                          ", "
+                        )}`;
+                      })
+                      .join(", ")}
                   </Text>
                 )}
                 {item.specialInstructions && (
@@ -233,47 +242,51 @@ export default function OrderTrackingScreen() {
               <Text style={styles.orderItemPrice}>{item.totalPrice} ETB</Text>
             </View>
           ))}
-          
+
           <View style={styles.divider} />
-          
+
           {/* Order summary */}
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
             <Text style={styles.summaryValue}>{order.subtotal} ETB</Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Delivery Fee</Text>
             <Text style={styles.summaryValue}>{order.deliveryFee} ETB</Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tax</Text>
             <Text style={styles.summaryValue}>{order.tax} ETB</Text>
           </View>
-          
+
           {order.tip && order.tip > 0 && (
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Tip</Text>
               <Text style={styles.summaryValue}>{order.tip} ETB</Text>
             </View>
           )}
-          
+
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>{order.total} ETB</Text>
           </View>
-          
+
           {/* Payment information */}
           <View style={styles.paymentRow}>
             <Text style={styles.paymentLabel}>Payment Method</Text>
             <Text style={styles.paymentValue}>
-              {order.paymentMethod === "credit_card" ? "Credit Card" :
-               order.paymentMethod === "debit_card" ? "Debit Card" :
-               order.paymentMethod === "mobile_money" ? "Mobile Money" : "Cash"}
+              {order.paymentMethod === "credit_card"
+                ? "Credit Card"
+                : order.paymentMethod === "debit_card"
+                ? "Debit Card"
+                : order.paymentMethod === "mobile_money"
+                ? "Mobile Money"
+                : "Cash"}
             </Text>
           </View>
-          
+
           <View style={styles.paymentRow}>
             <Text style={styles.paymentLabel}>Payment Status</Text>
             <View style={styles.paymentStatusContainer}>
@@ -296,7 +309,7 @@ export default function OrderTrackingScreen() {
           </View>
         </View>
       </ScrollView>
-      
+
       {/* Cancel order button - only shown for orders that can be cancelled */}
       {canCancel && (
         <View style={styles.footer}>

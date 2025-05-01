@@ -5,7 +5,7 @@
  * Provides platform-specific implementations for web and native
  */
 
-import create from "zustand";
+import {create} from 'zustand';
 import { Location } from "@/types/restaurant";
 import * as ExpoLocation from "expo-location";
 import { Platform } from "react-native";

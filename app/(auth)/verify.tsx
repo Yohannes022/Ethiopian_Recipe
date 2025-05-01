@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   View,
@@ -8,66 +8,45 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  TextInput,
-  TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { Image } from "expo-image";
+import Input from "@/components/Input";
 import Button from "@/components/Button";
-import colors from "@/constants/Colors";
+import colors from "@/constants/colors";
 import typography from "@/constants/typography";
 import { useAuthStore } from "@/store/authStore";
 
-export default function VerifyScreen() {
+export default function LoginScreen() {
   const router = useRouter();
-  const { verifyOtp, isLoading, error } = useAuthStore();
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const inputRefs = useRef<Array<TextInput | null>>([]);
+  const { login, isLoading, error } = useAuthStore();
+  const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
 
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timerId = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-      return () => clearTimeout(timerId);
+  const validatePhone = () => {
+    if (!phone) {
+      setPhoneError("Phone number is required");
+      return false;
     }
-  }, [timeLeft]);
-
-  const handleOtpChange = (text: string, index: number) => {
-    if (text.length > 1) {
-      text = text[0];
+    
+    if (phone.length < 10) {
+      setPhoneError("Please enter a valid phone number");
+      return false;
     }
-
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-
-    // Auto-focus next input
-    if (text && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
+    
+    setPhoneError("");
+    return true;
   };
 
-  const handleKeyPress = (e: any, index: number) => {
-    if (e.nativeEvent.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleResend = () => {
-    setTimeLeft(60);
-    // In a real app, this would trigger the OTP to be resent
-  };
-
-  const handleVerify = async () => {
-    const otpString = otp.join("");
-    if (otpString.length !== 6) return;
-
+  const handleLogin = async () => {
+    if (!validatePhone()) return;
+    
     try {
-      await verifyOtp(otpString);
-      router.replace("/(tabs)");
+      await login(phone);
+      router.push("/verify");
     } catch (error) {
-      console.error("Verification error:", error);
+      console.error("Login error:", error);
     }
   };
 
@@ -78,53 +57,54 @@ export default function VerifyScreen() {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <SafeAreaView style={styles.safeArea}>
-          <View style={styles.content}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             <View style={styles.header}>
-              <Text style={styles.title}>Verification Code</Text>
+              <Image
+                source={{
+                  uri: "https://images.unsplash.com/photo-1563227812-0ea4c22e6cc8?q=80&w=500",
+                }}
+                style={styles.logo}
+                contentFit="cover"
+              />
+              <Text style={styles.title}>Welcome Back</Text>
               <Text style={styles.subtitle}>
-                We've sent a verification code to your phone
+                Enter your phone number to continue
               </Text>
             </View>
 
-            <View style={styles.otpContainer}>
-              {otp.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  ref={(ref) => (inputRefs.current[index] = ref)}
-                  style={styles.otpInput}
-                  value={digit}
-                  onChangeText={(text) => handleOtpChange(text, index)}
-                  onKeyPress={(e) => handleKeyPress(e, index)}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  selectTextOnFocus
-                />
-              ))}
+            <View style={styles.form}>
+              <Input
+                label="Phone Number"
+                placeholder="+251 91 234 5678"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                error={phoneError}
+              />
+
+              {error && <Text style={styles.errorText}>{error}</Text>}
+
+              <Button
+                title="Continue"
+                onPress={handleLogin}
+                variant="primary"
+                size="large"
+                loading={isLoading}
+                fullWidth
+                style={styles.button}
+              />
             </View>
 
-            {error && <Text style={styles.errorText}>{error}</Text>}
-
-            <Button
-              title="Verify"
-              onPress={handleVerify}
-              variant="primary"
-              size="large"
-              loading={isLoading}
-              fullWidth
-              style={styles.button}
-            />
-
-            <View style={styles.resendContainer}>
-              <Text style={styles.resendText}>Didn't receive the code? </Text>
-              {timeLeft > 0 ? (
-                <Text style={styles.timerText}>{`Resend in ${timeLeft}s`}</Text>
-              ) : (
-                <TouchableOpacity onPress={handleResend}>
-                  <Text style={styles.resendButton}>Resend</Text>
-                </TouchableOpacity>
-              )}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                By continuing, you agree to our Terms of Service and Privacy
+                Policy
+              </Text>
             </View>
-          </View>
+          </ScrollView>
         </SafeAreaView>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -139,13 +119,20 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     padding: 24,
   },
   header: {
-    marginTop: 40,
+    alignItems: "center",
+    marginTop: 20,
     marginBottom: 40,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 24,
   },
   title: {
     ...typography.heading2,
@@ -154,47 +141,27 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.body,
     color: colors.lightText,
-  },
-  otpContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 32,
-  },
-  otpInput: {
-    width: 50,
-    height: 56,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    borderRadius: 8,
     textAlign: "center",
-    fontSize: 20,
-    fontWeight: "600",
-    backgroundColor: colors.white,
+  },
+  form: {
+    marginBottom: 24,
   },
   button: {
-    marginBottom: 24,
+    marginTop: 16,
   },
   errorText: {
     ...typography.bodySmall,
     color: colors.error,
-    marginBottom: 16,
+    marginTop: 8,
+    marginBottom: 8,
   },
-  resendContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
+  footer: {
+    marginTop: "auto",
     alignItems: "center",
   },
-  resendText: {
-    ...typography.bodySmall,
+  footerText: {
+    ...typography.caption,
     color: colors.lightText,
-  },
-  timerText: {
-    ...typography.bodySmall,
-    color: colors.lightText,
-  },
-  resendButton: {
-    ...typography.bodySmall,
-    color: colors.primary,
-    fontWeight: "600",
+    textAlign: "center",
   },
 });

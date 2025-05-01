@@ -13,7 +13,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, Plus, X } from "lucide-react-native";
-import colors from "@/constants/Colors";
+import colors from "@/constants/colors";
 import typography from "@/constants/typography";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
@@ -35,9 +35,7 @@ export default function EditRecipeScreen() {
   const [prepTime, setPrepTime] = useState("");
   const [cookTime, setCookTime] = useState("");
   const [servings, setServings] = useState("");
-  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
-    "medium"
-  );
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [region, setRegion] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -61,7 +59,7 @@ export default function EditRecipeScreen() {
       setServings(recipe.servings.toString());
       setDifficulty(recipe.difficulty);
       setRegion(recipe.region || "");
-      setSelectedTags(recipe.tags || []);
+      setSelectedTags(recipe.tags);
       setIngredients(recipe.ingredients);
       setSteps(recipe.steps);
     } else {
@@ -89,11 +87,7 @@ export default function EditRecipeScreen() {
     ]);
   };
 
-  const updateIngredient = (
-    id: string,
-    field: keyof Ingredient,
-    value: string
-  ) => {
+  const updateIngredient = (id: string, field: keyof Ingredient, value: string) => {
     setIngredients(
       ingredients.map((ing) =>
         ing.id === id ? { ...ing, [field]: value } : ing
@@ -108,12 +102,17 @@ export default function EditRecipeScreen() {
   };
 
   const addStep = () => {
-    setSteps([...steps, { id: Date.now().toString(), description: "" }]);
+    setSteps([
+      ...steps,
+      { id: Date.now().toString(), description: "" },
+    ]);
   };
 
   const updateStep = (id: string, description: string) => {
     setSteps(
-      steps.map((step) => (step.id === id ? { ...step, description } : step))
+      steps.map((step) =>
+        step.id === id ? { ...step, description } : step
+      )
     );
   };
 
@@ -184,12 +183,16 @@ export default function EditRecipeScreen() {
         tags: selectedTags.length > 0 ? selectedTags : ["traditional"],
       });
 
-      Alert.alert("Success", "Your recipe has been updated successfully!", [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ]);
+      Alert.alert(
+        "Success",
+        "Your recipe has been updated successfully!",
+        [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ]
+      );
     } catch (error) {
       console.error("Error updating recipe:", error);
       Alert.alert("Error", "Failed to update recipe. Please try again.");
@@ -245,7 +248,10 @@ export default function EditRecipeScreen() {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+            <TouchableOpacity
+              style={styles.imagePicker}
+              onPress={pickImage}
+            >
               <Camera size={32} color={colors.lightText} />
               <Text style={styles.imagePickerText}>Add Recipe Photo</Text>
             </TouchableOpacity>
@@ -314,27 +320,25 @@ export default function EditRecipeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.regionsContainer}
           >
-            {regions
-              .filter((r) => r !== "All regions")
-              .map((r) => (
-                <TouchableOpacity
-                  key={r}
+            {regions.filter(r => r !== "All regions").map((r) => (
+              <TouchableOpacity
+                key={r}
+                style={[
+                  styles.regionButton,
+                  region === r && styles.selectedRegion,
+                ]}
+                onPress={() => setRegion(region === r ? "" : r)}
+              >
+                <Text
                   style={[
-                    styles.regionButton,
-                    region === r && styles.selectedRegion,
+                    styles.regionButtonText,
+                    region === r && styles.selectedRegionText,
                   ]}
-                  onPress={() => setRegion(region === r ? "" : r)}
                 >
-                  <Text
-                    style={[
-                      styles.regionButtonText,
-                      region === r && styles.selectedRegionText,
-                    ]}
-                  >
-                    {r}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                  {r}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </ScrollView>
 
           <Text style={styles.label}>Tags</Text>
@@ -403,14 +407,19 @@ export default function EditRecipeScreen() {
                 <X
                   size={20}
                   color={
-                    ingredients.length === 1 ? colors.divider : colors.lightText
+                    ingredients.length === 1
+                      ? colors.divider
+                      : colors.lightText
                   }
                 />
               </TouchableOpacity>
             </View>
           ))}
 
-          <TouchableOpacity style={styles.addButton} onPress={addIngredient}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={addIngredient}
+          >
             <Plus size={20} color={colors.primary} />
             <Text style={styles.addButtonText}>Add Ingredient</Text>
           </TouchableOpacity>
@@ -418,7 +427,9 @@ export default function EditRecipeScreen() {
           <View style={styles.divider} />
 
           <Text style={styles.sectionTitle}>Instructions</Text>
-          {errors.steps && <Text style={styles.errorText}>{errors.steps}</Text>}
+          {errors.steps && (
+            <Text style={styles.errorText}>{errors.steps}</Text>
+          )}
 
           {steps.map((step, index) => (
             <View key={step.id} style={styles.stepContainer}>
@@ -449,7 +460,10 @@ export default function EditRecipeScreen() {
             </View>
           ))}
 
-          <TouchableOpacity style={styles.addButton} onPress={addStep}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={addStep}
+          >
             <Plus size={20} color={colors.primary} />
             <Text style={styles.addButtonText}>Add Step</Text>
           </TouchableOpacity>

@@ -15,7 +15,7 @@ import {
 import { useRouter } from "expo-router";
 import { Trash2, Plus, Minus, ChevronRight } from "lucide-react-native";
 import { Image } from "expo-image";
-import colors from "@/constants/Colors";
+import colors from "@/constants/colors";
 import typography from "@/constants/typography";
 import Button from "@/components/Button";
 import { useOrderStore } from "@/store/orderStore";
@@ -25,30 +25,30 @@ import { useAuthStore } from "@/store/authStore";
 export default function CartScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const {
-    cart,
-    selectedRestaurantId,
-    updateCartItemQuantity,
-    removeFromCart,
+  const { 
+    cart, 
+    selectedRestaurantId, 
+    updateCartItemQuantity, 
+    removeFromCart, 
     clearCart,
     getCartTotal,
     getDeliveryFee,
     getTaxAmount,
-    getOrderTotal,
+    getOrderTotal
   } = useOrderStore();
-
+  
   const { getRestaurantById } = useRestaurantStore();
-
-  const restaurant = selectedRestaurantId
-    ? getRestaurantById(selectedRestaurantId)
+  
+  const restaurant = selectedRestaurantId 
+    ? getRestaurantById(selectedRestaurantId) 
     : null;
-
+  
   const [isRemoving, setIsRemoving] = useState(false);
-
+  
   const handleQuantityChange = (cartItemId: string, newQuantity: number) => {
     updateCartItemQuantity(cartItemId, newQuantity);
   };
-
+  
   const handleRemoveItem = (cartItemId: string) => {
     setIsRemoving(true);
     setTimeout(() => {
@@ -56,7 +56,7 @@ export default function CartScreen() {
       setIsRemoving(false);
     }, 300);
   };
-
+  
   const handleClearCart = () => {
     Alert.alert(
       "Clear Cart",
@@ -64,17 +64,17 @@ export default function CartScreen() {
       [
         {
           text: "Cancel",
-          style: "cancel",
+          style: "cancel"
         },
         {
           text: "Clear",
           onPress: clearCart,
-          style: "destructive",
-        },
+          style: "destructive"
+        }
       ]
     );
   };
-
+  
   const handleCheckout = () => {
     if (!user) {
       Alert.alert(
@@ -83,27 +83,25 @@ export default function CartScreen() {
         [
           {
             text: "Cancel",
-            style: "cancel",
+            style: "cancel"
           },
           {
             text: "Sign In",
-            onPress: () => router.push("/login"),
-          },
+            onPress: () => router.push("/login")
+          }
         ]
       );
       return;
     }
-
+    
     router.push("/checkout");
   };
-
+  
   if (cart.length === 0) {
     return (
       <View style={styles.emptyContainer}>
         <Image
-          source={{
-            uri: "https://images.unsplash.com/photo-1594385208974-2e75f8d7bb48?q=80&w=1000&auto=format&fit=crop",
-          }}
+          source={{ uri: "https://images.unsplash.com/photo-1594385208974-2e75f8d7bb48?q=80&w=1000&auto=format&fit=crop" }}
           style={styles.emptyImage}
           contentFit="contain"
         />
@@ -132,7 +130,7 @@ export default function CartScreen() {
             </TouchableOpacity>
           )}
         </View>
-
+        
         {restaurant && (
           <TouchableOpacity
             style={styles.restaurantContainer}
@@ -152,7 +150,7 @@ export default function CartScreen() {
             <ChevronRight size={20} color={colors.lightText} />
           </TouchableOpacity>
         )}
-
+        
         <View style={styles.cartItemsContainer}>
           {cart.map((item) => (
             <View key={item.id} style={styles.cartItem}>
@@ -165,52 +163,46 @@ export default function CartScreen() {
                   <Trash2 size={20} color={colors.error} />
                 </TouchableOpacity>
               </View>
-
+              
               {item.selectedOptions && item.selectedOptions.length > 0 && (
                 <Text style={styles.cartItemOptions}>
-                  {item.selectedOptions
-                    .map((option) => {
-                      const optionDetails = item.menuItem.options?.find(
-                        (opt) => opt.id === option.optionId
+                  {item.selectedOptions.map((option) => {
+                    const optionDetails = item.menuItem.options?.find(
+                      (opt) => opt.id === option.optionId
+                    );
+                    
+                    if (!optionDetails) return null;
+                    
+                    const choiceNames = option.choiceIds.map((choiceId) => {
+                      const choice = optionDetails.choices.find(
+                        (c) => c.id === choiceId
                       );
-
-                      if (!optionDetails) return null;
-
-                      const choiceNames = option.choiceIds.map((choiceId) => {
-                        const choice = optionDetails.choices.find(
-                          (c) => c.id === choiceId
-                        );
-                        return choice?.name || "";
-                      });
-
-                      return `${optionDetails.name}: ${choiceNames.join(", ")}`;
-                    })
-                    .join(", ")}
+                      return choice?.name || "";
+                    });
+                    
+                    return `${optionDetails.name}: ${choiceNames.join(", ")}`;
+                  }).join(", ")}
                 </Text>
               )}
-
+              
               {item.specialInstructions && (
                 <Text style={styles.cartItemInstructions}>
                   Note: {item.specialInstructions}
                 </Text>
               )}
-
+              
               <View style={styles.cartItemFooter}>
                 <View style={styles.quantityContainer}>
                   <TouchableOpacity
                     style={styles.quantityButton}
-                    onPress={() =>
-                      handleQuantityChange(item.id, item.quantity - 1)
-                    }
+                    onPress={() => handleQuantityChange(item.id, item.quantity - 1)}
                   >
                     <Minus size={16} color={colors.text} />
                   </TouchableOpacity>
                   <Text style={styles.quantityText}>{item.quantity}</Text>
                   <TouchableOpacity
                     style={styles.quantityButton}
-                    onPress={() =>
-                      handleQuantityChange(item.id, item.quantity + 1)
-                    }
+                    onPress={() => handleQuantityChange(item.id, item.quantity + 1)}
                   >
                     <Plus size={16} color={colors.text} />
                   </TouchableOpacity>
@@ -220,32 +212,32 @@ export default function CartScreen() {
             </View>
           ))}
         </View>
-
+        
         <View style={styles.summaryContainer}>
           <Text style={styles.summaryTitle}>Order Summary</Text>
-
+          
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
             <Text style={styles.summaryValue}>{getCartTotal()} ETB</Text>
           </View>
-
+          
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Delivery Fee</Text>
             <Text style={styles.summaryValue}>{getDeliveryFee()} ETB</Text>
           </View>
-
+          
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Tax</Text>
             <Text style={styles.summaryValue}>{getTaxAmount()} ETB</Text>
           </View>
-
+          
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>{getOrderTotal()} ETB</Text>
           </View>
         </View>
       </ScrollView>
-
+      
       <View style={styles.footer}>
         <Button
           title="Proceed to Checkout"

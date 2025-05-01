@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Filter, MapPin } from "lucide-react-native";
-import colors from "@/constants/Colors";
+import colors from "@/constants/colors";
 import typography from "@/constants/typography";
 import SearchBar from "@/components/SearchBar";
 import RestaurantCard from "@/components/restaurant/RestaurantCard";
@@ -36,7 +36,7 @@ export default function RestaurantsScreen() {
     setSelectedPriceRange,
     filterRestaurants,
   } = useRestaurantStore();
-
+  
   const {
     userLocation,
     getCurrentLocation,
@@ -44,47 +44,47 @@ export default function RestaurantsScreen() {
     locationError,
     getNearbyRestaurants,
   } = useLocationStore();
-
+  
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-
+  
   // Get unique cuisine types from all restaurants
   const cuisineTypes = Array.from(
     new Set(restaurants.flatMap((restaurant) => restaurant.cuisineType))
   );
-
+  
   // Price range options
   const priceRanges = [
     { id: "low", label: "$" },
     { id: "medium", label: "$$" },
     { id: "high", label: "$$$" },
   ];
-
+  
   // Get nearby restaurants
   const nearbyRestaurants = userLocation
     ? getNearbyRestaurants(filteredRestaurants)
     : filteredRestaurants;
-
+  
   // Request location on mount
   useEffect(() => {
     getCurrentLocation();
   }, []);
-
+  
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await getCurrentLocation();
     filterRestaurants();
     setIsRefreshing(false);
   };
-
+  
   const handleSearch = (text: string) => {
     setSearchQuery(text);
   };
-
+  
   const toggleFilters = () => {
     setShowFilters(!showFilters);
   };
-
+  
   const handleCuisineSelect = (cuisine: string) => {
     if (selectedCuisineType === cuisine) {
       setSelectedCuisineType(null);
@@ -92,7 +92,7 @@ export default function RestaurantsScreen() {
       setSelectedCuisineType(cuisine);
     }
   };
-
+  
   const handlePriceRangeSelect = (priceRange: string) => {
     if (selectedPriceRange === priceRange) {
       setSelectedPriceRange(null);
@@ -100,21 +100,21 @@ export default function RestaurantsScreen() {
       setSelectedPriceRange(priceRange);
     }
   };
-
+  
   const clearFilters = () => {
     setSelectedCuisineType(null);
     setSelectedPriceRange(null);
   };
-
+  
   const renderRestaurantItem = ({ item }: { item: any }) => (
     <RestaurantCard restaurant={item} variant="vertical" />
   );
-
+  
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Restaurants</Text>
-
+        
         <View style={styles.locationContainer}>
           <MapPin size={16} color={colors.primary} />
           <Text style={styles.locationText} numberOfLines={1}>
@@ -122,15 +122,14 @@ export default function RestaurantsScreen() {
           </Text>
         </View>
       </View>
-
+      
       <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <SearchBar
-            placeholder="Search restaurants, cuisines..."
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-        </View>
+        <SearchBar
+          placeholder="Search restaurants, cuisines..."
+          value={searchQuery}
+          onChangeText={handleSearch}
+          style={styles.searchBar}
+        />
         <TouchableOpacity
           style={[
             styles.filterButton,
@@ -138,10 +137,13 @@ export default function RestaurantsScreen() {
           ]}
           onPress={toggleFilters}
         >
-          <Filter size={20} color={showFilters ? colors.white : colors.text} />
+          <Filter
+            size={20}
+            color={showFilters ? colors.white : colors.text}
+          />
         </TouchableOpacity>
       </View>
-
+      
       {showFilters && (
         <View style={styles.filtersContainer}>
           <View style={styles.filterSection}>
@@ -162,13 +164,13 @@ export default function RestaurantsScreen() {
                 <CategoryPill
                   key={cuisine}
                   title={cuisine}
-                  selected={selectedCuisineType === cuisine}
+                  isSelected={selectedCuisineType === cuisine}
                   onPress={() => handleCuisineSelect(cuisine)}
                 />
               ))}
             </ScrollView>
           </View>
-
+          
           <View style={styles.filterSection}>
             <Text style={styles.filterTitle}>Price Range</Text>
             <View style={styles.priceRangeContainer}>
@@ -177,16 +179,14 @@ export default function RestaurantsScreen() {
                   key={range.id}
                   style={[
                     styles.priceRangeButton,
-                    selectedPriceRange === range.id &&
-                      styles.selectedPriceRange,
+                    selectedPriceRange === range.id && styles.selectedPriceRange,
                   ]}
                   onPress={() => handlePriceRangeSelect(range.id)}
                 >
                   <Text
                     style={[
                       styles.priceRangeText,
-                      selectedPriceRange === range.id &&
-                        styles.selectedPriceRangeText,
+                      selectedPriceRange === range.id && styles.selectedPriceRangeText,
                     ]}
                   >
                     {range.label}
@@ -197,7 +197,7 @@ export default function RestaurantsScreen() {
           </View>
         </View>
       )}
-
+      
       <FlatList
         data={nearbyRestaurants}
         renderItem={renderRestaurantItem}

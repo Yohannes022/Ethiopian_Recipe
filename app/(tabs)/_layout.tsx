@@ -7,15 +7,8 @@
 
 import React from "react";
 import { Tabs } from "expo-router";
-import {
-  Home,
-  Search,
-  MapPin,
-  PlusSquare,
-  User,
-  ShoppingBag,
-} from "lucide-react-native";
-import colors from "@/constants/Colors";
+import { Home, Search, MapPin, PlusSquare, User, ShoppingBag } from "lucide-react-native";
+import colors from "@/constants/colors";
 import { useOrderStore } from "@/store/orderStore";
 
 export default function TabLayout() {

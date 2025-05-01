@@ -11,7 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { ChevronRight } from "lucide-react-native";
-import colors from "@/constants/Colors";
+import colors from "@/constants/colors";
 import typography from "@/constants/typography";
 import RecipeCard from "@/components/RecipeCard";
 import CategoryPill from "@/components/CategoryPill";
@@ -25,12 +25,12 @@ export default function HomeScreen() {
   const { recipes, setSelectedTag } = useRecipeStore();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
+  
   const featuredRecipe = recipes[0];
   const popularRecipes = recipes.slice(1, 5);
-
+  
   const filteredRecipes = selectedCategory
-    ? recipes.filter((recipe) => (recipe.tags ?? []).includes(selectedCategory))
+    ? recipes.filter((recipe) => recipe.tags.includes(selectedCategory))
     : popularRecipes;
 
   const handleCategoryPress = (category: string) => {
@@ -69,20 +69,12 @@ export default function HomeScreen() {
     >
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>
-            Hello, {user?.name?.split(" ")[0] || "Guest"}
-          </Text>
-          <Text style={styles.subtitle}>
-            What would you like to cook today?
-          </Text>
+          <Text style={styles.greeting}>Hello, {user?.name?.split(" ")[0] || "Guest"}</Text>
+          <Text style={styles.subtitle}>What would you like to cook today?</Text>
         </View>
         <TouchableOpacity onPress={() => router.push("/profile")}>
           <Image
-            source={{
-              uri:
-                user?.avatarUrl ||
-                "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=200",
-            }}
+            source={{ uri: user?.avatar || "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=200" }}
             style={styles.avatar}
           />
         </TouchableOpacity>
@@ -113,9 +105,7 @@ export default function HomeScreen() {
       <View style={styles.popularContainer}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>
-            {selectedCategory
-              ? `${selectedCategory} Recipes`
-              : "Popular Recipes"}
+            {selectedCategory ? `${selectedCategory} Recipes` : "Popular Recipes"}
           </Text>
           <TouchableOpacity
             style={styles.seeAllButton}

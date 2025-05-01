@@ -14,7 +14,7 @@ import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
-import colors from "@/constants/Colors";
+import colors from "@/constants/colors";
 import typography from "@/constants/typography";
 import { useAuthStore } from "@/store/authStore";
 
@@ -29,19 +29,19 @@ export default function LoginScreen() {
       setPhoneError("Phone number is required");
       return false;
     }
-
+    
     if (phone.length < 10) {
       setPhoneError("Please enter a valid phone number");
       return false;
     }
-
+    
     setPhoneError("");
     return true;
   };
 
   const handleLogin = async () => {
     if (!validatePhone()) return;
-
+    
     try {
       await login(phone);
       router.push("/verify");

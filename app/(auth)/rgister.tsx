@@ -1,39 +1,52 @@
-/**
- * Registration screen with different options for customers and restaurant owners
- */
-
 import React, { useState } from "react";
 import {
   StyleSheet,
   View,
   Text,
-  ScrollView,
-  TouchableOpacity,
+  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
-  Image,
+  TouchableWithoutFeedback,
+  Keyboard,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { User, Store, ChevronRight } from "lucide-react-native";
-import colors from "@/constants/Colors";
-import typography from "@/constants/typography";
+import { Image } from "expo-image";
+import Input from "@/components/Input";
 import Button from "@/components/Button";
+import colors from "@/constants/colors";
+import typography from "@/constants/typography";
+import { useAuthStore } from "@/store/authStore";
 
-export default function RegisterScreen() {
+export default function LoginScreen() {
   const router = useRouter();
-  const [selectedRole, setSelectedRole] = useState<
-    "customer" | "restaurant_owner" | null
-  >(null);
+  const { login, isLoading, error } = useAuthStore();
+  const [phone, setPhone] = useState("");
+  const [phoneError, setPhoneError] = useState("");
 
-  const handleRoleSelect = (role: "customer" | "restaurant_owner") => {
-    setSelectedRole(role);
+  const validatePhone = () => {
+    if (!phone) {
+      setPhoneError("Phone number is required");
+      return false;
+    }
+    
+    if (phone.length < 10) {
+      setPhoneError("Please enter a valid phone number");
+      return false;
+    }
+    
+    setPhoneError("");
+    return true;
   };
 
-  const handleContinue = () => {
-    if (selectedRole === "customer") {
-      router.push("/login");
-    } else if (selectedRole === "restaurant_owner") {
-      router.push("/restaurant-signup");
+  const handleLogin = async () => {
+    if (!validatePhone()) return;
+    
+    try {
+      await login(phone);
+      router.push("/verify");
+    } catch (error) {
+      console.error("Login error:", error);
     }
   };
 
@@ -42,89 +55,58 @@ export default function RegisterScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>Join Ethiopian Recipe Share</Text>
-          <Text style={styles.subtitle}>
-            Select how you want to use the app
-          </Text>
-        </View>
-
-        <View style={styles.roleContainer}>
-          <TouchableOpacity
-            style={[
-              styles.roleCard,
-              selectedRole === "customer" && styles.selectedRoleCard,
-            ]}
-            onPress={() => handleRoleSelect("customer")}
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <SafeAreaView style={styles.safeArea}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
           >
-            <View style={styles.roleIconContainer}>
-              <User size={32} color={colors.primary} />
-            </View>
-            <View style={styles.roleContent}>
-              <Text style={styles.roleName}>Customer</Text>
-              <Text style={styles.roleDescription}>
-                Order food from restaurants, discover recipes, and share your
-                own creations
+            <View style={styles.header}>
+              <Image
+                source={{
+                  uri: "https://images.unsplash.com/photo-1563227812-0ea4c22e6cc8?q=80&w=500",
+                }}
+                style={styles.logo}
+                contentFit="cover"
+              />
+              <Text style={styles.title}>Welcome Back</Text>
+              <Text style={styles.subtitle}>
+                Enter your phone number to continue
               </Text>
             </View>
-            <ChevronRight
-              size={24}
-              color={
-                selectedRole === "customer" ? colors.primary : colors.lightText
-              }
-            />
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.roleCard,
-              selectedRole === "restaurant_owner" && styles.selectedRoleCard,
-            ]}
-            onPress={() => handleRoleSelect("restaurant_owner")}
-          >
-            <View style={styles.roleIconContainer}>
-              <Store size={32} color={colors.primary} />
+            <View style={styles.form}>
+              <Input
+                label="Phone Number"
+                placeholder="+251 91 234 5678"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                error={phoneError}
+              />
+
+              {error && <Text style={styles.errorText}>{error}</Text>}
+
+              <Button
+                title="Continue"
+                onPress={handleLogin}
+                variant="primary"
+                size="large"
+                loading={isLoading}
+                fullWidth
+                style={styles.button}
+              />
             </View>
-            <View style={styles.roleContent}>
-              <Text style={styles.roleName}>Restaurant Owner</Text>
-              <Text style={styles.roleDescription}>
-                Showcase your restaurant, manage your menu, and receive orders
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                By continuing, you agree to our Terms of Service and Privacy
+                Policy
               </Text>
             </View>
-            <ChevronRight
-              size={24}
-              color={
-                selectedRole === "restaurant_owner"
-                  ? colors.primary
-                  : colors.lightText
-              }
-            />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.footer}>
-          <Button
-            title="Continue"
-            onPress={handleContinue}
-            variant="primary"
-            disabled={!selectedRole}
-            fullWidth
-          />
-          <TouchableOpacity
-            style={styles.loginLink}
-            onPress={() => router.push("/login")}
-          >
-            <Text style={styles.loginLinkText}>
-              Already have an account?{" "}
-              <Text style={styles.loginLinkTextBold}>Log in</Text>
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+          </ScrollView>
+        </SafeAreaView>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 }
@@ -134,17 +116,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  safeArea: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     padding: 24,
   },
   header: {
-    marginBottom: 32,
     alignItems: "center",
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 24,
   },
   title: {
-    ...typography.heading1,
-    textAlign: "center",
+    ...typography.heading2,
     marginBottom: 8,
   },
   subtitle: {
@@ -152,61 +143,25 @@ const styles = StyleSheet.create({
     color: colors.lightText,
     textAlign: "center",
   },
-  roleContainer: {
-    marginBottom: 32,
+  form: {
+    marginBottom: 24,
   },
-  roleCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 2,
-    borderColor: "transparent",
+  button: {
+    marginTop: 16,
   },
-  selectedRoleCard: {
-    borderColor: colors.primary,
-    backgroundColor: colors.primary + "10",
-  },
-  roleIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.primary + "20",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  roleContent: {
-    flex: 1,
-  },
-  roleName: {
-    ...typography.heading3,
-    marginBottom: 4,
-  },
-  roleDescription: {
+  errorText: {
     ...typography.bodySmall,
-    color: colors.lightText,
+    color: colors.error,
+    marginTop: 8,
+    marginBottom: 8,
   },
   footer: {
     marginTop: "auto",
-  },
-  loginLink: {
-    marginTop: 16,
     alignItems: "center",
   },
-  loginLinkText: {
-    ...typography.body,
+  footerText: {
+    ...typography.caption,
     color: colors.lightText,
-  },
-  loginLinkTextBold: {
-    fontWeight: "600",
-    color: colors.primary,
+    textAlign: "center",
   },
 });

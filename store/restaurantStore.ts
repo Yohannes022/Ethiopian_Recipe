@@ -3,162 +3,218 @@
  * Manages restaurant listings, menu items, and related data
  */
 
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Restaurant, MenuItem, Review } from "@/types/restaurant";
-import { restaurants as mockRestaurants, menuItems as mockMenuItems, reviews as mockReviews } from "@/mocks/restaurants";
+import { Restaurant, MenuCategory, MenuItem } from "@/types/recipe";
+import { restaurants as mockRestaurants } from "@/mocks/restaurants";
 
 interface RestaurantState {
   restaurants: Restaurant[];
-  menuItems: MenuItem[];
-  reviews: Review[];
-  selectedRestaurantId: string | null;
-  filteredRestaurants: Restaurant[];
-  searchQuery: string;
-  selectedCuisineType: string | null;
-  selectedPriceRange: string | null;
   
   // Actions
-  setRestaurants: (restaurants: Restaurant[]) => void;
-  setMenuItems: (menuItems: MenuItem[]) => void;
-  setReviews: (reviews: Review[]) => void;
-  setSelectedRestaurantId: (id: string | null) => void;
-  setSearchQuery: (query: string) => void;
-  setSelectedCuisineType: (cuisineType: string | null) => void;
-  setSelectedPriceRange: (priceRange: string | null) => void;
-  filterRestaurants: () => void;
   getRestaurantById: (id: string) => Restaurant | undefined;
-  getMenuItemsByRestaurantId: (restaurantId: string) => MenuItem[];
-  getReviewsByRestaurantId: (restaurantId: string) => Review[];
-  addReview: (review: Omit<Review, "id" | "createdAt" | "likes">) => void;
+  updateRestaurant: (id: string, data: Partial<Restaurant>) => void;
+  addMenuItem: (restaurantId: string, categoryId: string, item: Omit<MenuItem, "id">) => void;
+  updateMenuItem: (restaurantId: string, categoryId: string, itemId: string, data: Partial<MenuItem>) => void;
+  deleteMenuItem: (restaurantId: string, categoryId: string, itemId: string) => void;
+  addMenuCategory: (restaurantId: string, name: string) => void;
+  updateMenuCategory: (restaurantId: string, categoryId: string, name: string) => void;
+  deleteMenuCategory: (restaurantId: string, categoryId: string) => void;
+  followRestaurant: (restaurantId: string) => void;
+  unfollowRestaurant: (restaurantId: string) => void;
 }
 
 export const useRestaurantStore = create<RestaurantState>()(
   persist(
     (set, get) => ({
       restaurants: mockRestaurants,
-      menuItems: mockMenuItems,
-      reviews: mockReviews,
-      selectedRestaurantId: null,
-      filteredRestaurants: mockRestaurants,
-      searchQuery: "",
-      selectedCuisineType: null,
-      selectedPriceRange: null,
-      
-      setRestaurants: (restaurants) => {
-        set({ restaurants });
-        get().filterRestaurants();
-      },
-      
-      setMenuItems: (menuItems) => {
-        set({ menuItems });
-      },
-      
-      setReviews: (reviews) => {
-        set({ reviews });
-      },
-      
-      setSelectedRestaurantId: (id) => {
-        set({ selectedRestaurantId: id });
-      },
-      
-      setSearchQuery: (query) => {
-        set({ searchQuery: query });
-        get().filterRestaurants();
-      },
-      
-      setSelectedCuisineType: (cuisineType) => {
-        set({ selectedCuisineType: cuisineType });
-        get().filterRestaurants();
-      },
-      
-      setSelectedPriceRange: (priceRange) => {
-        set({ selectedPriceRange: priceRange });
-        get().filterRestaurants();
-      },
-      
-      filterRestaurants: () => {
-        const { restaurants, searchQuery, selectedCuisineType, selectedPriceRange } = get();
-        
-        let filtered = [...restaurants];
-        
-        if (searchQuery) {
-          const query = searchQuery.toLowerCase();
-          filtered = filtered.filter(
-            (restaurant) =>
-              restaurant.name.toLowerCase().includes(query) ||
-              restaurant.description.toLowerCase().includes(query) ||
-              restaurant.cuisineType.some((cuisine) => cuisine.toLowerCase().includes(query))
-          );
-        }
-        
-        if (selectedCuisineType) {
-          filtered = filtered.filter((restaurant) =>
-            restaurant.cuisineType.includes(selectedCuisineType)
-          );
-        }
-        
-        if (selectedPriceRange) {
-          filtered = filtered.filter(
-            (restaurant) => restaurant.priceRange === selectedPriceRange
-          );
-        }
-        
-        set({ filteredRestaurants: filtered });
-      },
       
       getRestaurantById: (id) => {
-        return get().restaurants.find((restaurant) => restaurant.id === id);
+        return get().restaurants.find(r => r.id === id);
       },
       
-      getMenuItemsByRestaurantId: (restaurantId) => {
-        return get().menuItems.filter((item) => item.restaurantId === restaurantId);
+      updateRestaurant: (id, data) => {
+        set((state) => ({
+          restaurants: state.restaurants.map((restaurant) =>
+            restaurant.id === id
+              ? { ...restaurant, ...data }
+              : restaurant
+          ),
+        }));
       },
       
-      getReviewsByRestaurantId: (restaurantId) => {
-        return get().reviews.filter((review) => review.restaurantId === restaurantId);
-      },
-      
-      addReview: (reviewData) => {
-        const newReview: Review = {
+      addMenuItem: (restaurantId, categoryId, item) => {
+        const newItem: MenuItem = {
           id: Date.now().toString(),
-          createdAt: new Date().toISOString(),
-          likes: 0,
-          ...reviewData,
+          ...item
         };
         
         set((state) => ({
-          reviews: [newReview, ...state.reviews],
+          restaurants: state.restaurants.map((restaurant) => {
+            if (restaurant.id === restaurantId) {
+              const updatedCategories = restaurant.menuCategories.map((category) => {
+                if (category.id === categoryId) {
+                  return {
+                    ...category,
+                    items: [...category.items, newItem]
+                  };
+                }
+                return category;
+              });
+              
+              return {
+                ...restaurant,
+                menuCategories: updatedCategories
+              };
+            }
+            return restaurant;
+          }),
         }));
-        
-        // Update restaurant rating
-        set((state) => {
-          const restaurant = state.restaurants.find(r => r.id === reviewData.restaurantId);
-          if (restaurant) {
-            const restaurantReviews = [
-              ...state.reviews.filter(r => r.restaurantId === reviewData.restaurantId),
-              newReview
-            ];
-            
-            const totalRating = restaurantReviews.reduce((sum, r) => sum + r.rating, 0);
-            const newRating = totalRating / restaurantReviews.length;
-            
-            return {
-              restaurants: state.restaurants.map(r => 
-                r.id === reviewData.restaurantId 
-                  ? { 
-                      ...r, 
-                      rating: parseFloat(newRating.toFixed(1)), 
-                      reviewCount: r.reviewCount + 1 
-                    } 
-                  : r
-              )
-            };
-          }
-          return state;
-        });
       },
+      
+      updateMenuItem: (restaurantId, categoryId, itemId, data) => {
+        set((state) => ({
+          restaurants: state.restaurants.map((restaurant) => {
+            if (restaurant.id === restaurantId) {
+              const updatedCategories = restaurant.menuCategories.map((category) => {
+                if (category.id === categoryId) {
+                  const updatedItems = category.items.map((item) => {
+                    if (item.id === itemId) {
+                      return { ...item, ...data };
+                    }
+                    return item;
+                  });
+                  
+                  return {
+                    ...category,
+                    items: updatedItems
+                  };
+                }
+                return category;
+              });
+              
+              return {
+                ...restaurant,
+                menuCategories: updatedCategories
+              };
+            }
+            return restaurant;
+          }),
+        }));
+      },
+      
+      deleteMenuItem: (restaurantId, categoryId, itemId) => {
+        set((state) => ({
+          restaurants: state.restaurants.map((restaurant) => {
+            if (restaurant.id === restaurantId) {
+              const updatedCategories = restaurant.menuCategories.map((category) => {
+                if (category.id === categoryId) {
+                  return {
+                    ...category,
+                    items: category.items.filter(item => item.id !== itemId)
+                  };
+                }
+                return category;
+              });
+              
+              return {
+                ...restaurant,
+                menuCategories: updatedCategories
+              };
+            }
+            return restaurant;
+          }),
+        }));
+      },
+      
+      addMenuCategory: (restaurantId, name) => {
+        const newCategory: MenuCategory = {
+          id: Date.now().toString(),
+          name,
+          items: []
+        };
+        
+        set((state) => ({
+          restaurants: state.restaurants.map((restaurant) => {
+            if (restaurant.id === restaurantId) {
+              return {
+                ...restaurant,
+                menuCategories: [...restaurant.menuCategories, newCategory]
+              };
+            }
+            return restaurant;
+          }),
+        }));
+      },
+      
+      updateMenuCategory: (restaurantId, categoryId, name) => {
+        set((state) => ({
+          restaurants: state.restaurants.map((restaurant) => {
+            if (restaurant.id === restaurantId) {
+              const updatedCategories = restaurant.menuCategories.map((category) => {
+                if (category.id === categoryId) {
+                  return {
+                    ...category,
+                    name
+                  };
+                }
+                return category;
+              });
+              
+              return {
+                ...restaurant,
+                menuCategories: updatedCategories
+              };
+            }
+            return restaurant;
+          }),
+        }));
+      },
+      
+      deleteMenuCategory: (restaurantId, categoryId) => {
+        set((state) => ({
+          restaurants: state.restaurants.map((restaurant) => {
+            if (restaurant.id === restaurantId) {
+              return {
+                ...restaurant,
+                menuCategories: restaurant.menuCategories.filter(
+                  category => category.id !== categoryId
+                )
+              };
+            }
+            return restaurant;
+          }),
+        }));
+      },
+      
+      followRestaurant: (restaurantId) => {
+        set((state) => ({
+          restaurants: state.restaurants.map((restaurant) => {
+            if (restaurant.id === restaurantId) {
+              return {
+                ...restaurant,
+                followers: restaurant.followers + 1
+              };
+            }
+            return restaurant;
+          }),
+        }));
+      },
+      
+      unfollowRestaurant: (restaurantId) => {
+        set((state) => ({
+          restaurants: state.restaurants.map((restaurant) => {
+            if (restaurant.id === restaurantId) {
+              return {
+                ...restaurant,
+                followers: Math.max(0, restaurant.followers - 1)
+              };
+            }
+            return restaurant;
+          }),
+        }));
+      }
     }),
     {
       name: "restaurant-storage",

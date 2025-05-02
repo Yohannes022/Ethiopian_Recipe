@@ -13,7 +13,7 @@ import { StatusBar } from "expo-status-bar";
 import { ErrorBoundary } from "./error-boundary";
 import colors from "@/constants/Colors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { trpc, trpcClient } from "@/lib/trpc";
+import { TRPCProvider } from "@/lib/trpc";
 
 export const unstable_settings = {
   initialRouteName: "(auth)",
@@ -49,12 +49,10 @@ export default function RootLayout() {
 
   return (
     <ErrorBoundary>
-      <trpc.Provider client={trpcClient} queryClient={queryClient}>
-        <QueryClientProvider client={queryClient}>
-          <StatusBar style="dark" />
-          <RootLayoutNav />
-        </QueryClientProvider>
-      </trpc.Provider>
+      <TRPCProvider>
+        <StatusBar style="dark" />
+        <RootLayoutNav />
+      </TRPCProvider>
     </ErrorBoundary>
   );
 }
@@ -98,29 +96,45 @@ function RootLayoutNav() {
         }} 
       />
       <Stack.Screen 
-        name="order/[id]" 
+        name="edit-profile" 
         options={{ 
-          title: "",
+          title: "Edit Profile",
           headerShown: false,
         }} 
       />
       <Stack.Screen 
-        name="checkout" 
+        name="settings" 
         options={{ 
-          title: "Checkout",
+          title: "Settings",
+          headerShown: false,
         }} 
       />
       <Stack.Screen 
         name="restaurant/[id]" 
         options={{ 
           title: "",
-          headerTransparent: true,
+          headerShown: false,
         }} 
       />
       <Stack.Screen 
-        name="restaurant-dashboard" 
+        name="restaurant/[id]/manage" 
         options={{ 
-          title: "Restaurant Dashboard",
+          title: "Manage Restaurant",
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="restaurant/[id]/add-menu-item" 
+        options={{ 
+          title: "Add Menu Item",
+          presentation: "modal",
+        }} 
+      />
+      <Stack.Screen 
+        name="restaurant/[id]/edit-menu-item" 
+        options={{ 
+          title: "Edit Menu Item",
+          presentation: "modal",
         }} 
       />
     </Stack>

@@ -18,7 +18,7 @@ import typography from "@/constants/typography";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
 import { useRecipeStore } from "@/store/recipeStore";
-import { Step } from "@/types/recipe";
+import { Ingredient, Step } from "@/types/recipe";
 import { popularTags, regions } from "@/mocks/recipes";
 
 export default function CreateRecipeScreen() {
@@ -35,9 +35,9 @@ export default function CreateRecipeScreen() {
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("medium");
   const [region, setRegion] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [ingredients, setIngredients] = useState<{ id: string; name: string; amount: string; unit: string }[]>([
-      { id: "1", name: "", amount: "", unit: "" },
-    ]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([
+    { id: "1", name: "", amount: "", unit: "" },
+  ]);
   const [steps, setSteps] = useState<Step[]>([
     { id: "1", description: "" },
   ]);
@@ -70,7 +70,7 @@ export default function CreateRecipeScreen() {
     ]);
   };
 
-  const updateIngredient = (id: string, field: "name" | "amount" | "unit", value: string) => {
+  const updateIngredient = (id: string, field: keyof Ingredient, value: string) => {
     setIngredients(
       ingredients.map((ing) =>
         ing.id === id ? { ...ing, [field]: value } : ing
@@ -156,23 +156,18 @@ export default function CreateRecipeScreen() {
       const finalImageUrl = imageUrl || "https://images.unsplash.com/photo-1567364816519-cbc9c4ffe1eb?q=80&w=1000";
 
       addRecipe({
-              title,
-              description,
-              imageUrl: finalImageUrl,
-              prepTime: parseInt(prepTime) || 0,
-              cookTime: parseInt(cookTime) || 0,
-              servings: parseInt(servings) || 1,
-              difficulty,
-              ingredients,
-              instructions: steps.map((step) => step.description), // Ensure steps are mapped to a valid format
-              region: region || undefined,
-              tags: selectedTags.length > 0 ? selectedTags : ["traditional"],
-              rating: 0, // Default rating
-              reviewCount: 0, // Default review count
-              cookingTime: parseInt(prepTime) + parseInt(cookTime) || 0, // Calculate total cooking time
-              category: "Uncategorized", // Default category
-              updatedAt: new Date().toISOString(), // Default updatedAt
-            });
+        title,
+        description,
+        imageUrl: finalImageUrl,
+        prepTime: parseInt(prepTime) || 0,
+        cookTime: parseInt(cookTime) || 0,
+        servings: parseInt(servings) || 1,
+        difficulty,
+        ingredients,
+        steps,
+        region: region || "", // Ensure region is always a string
+        tags: selectedTags.length > 0 ? selectedTags : ["traditional"],
+      });
 
       Alert.alert(
         "Success",
@@ -371,7 +366,7 @@ export default function CreateRecipeScreen() {
                 />
                 <Input
                   placeholder="Unit (optional)"
-                  value={ingredient.unit}
+                  value={ingredient.unit || ""}
                   onChangeText={(text) =>
                     updateIngredient(ingredient.id, "unit", text)
                   }

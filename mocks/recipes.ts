@@ -1,24 +1,4 @@
-export interface Recipe {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  prepTime: number;
-  cookTime: number;
-  servings: number;
-  difficulty: string;
-  ingredients: { id: string; name: string; amount: string; unit: string }[];
-  steps: { id: string; description: string }[];
-  region: string;
-  tags: string[];
-  authorId: string;
-  authorName: string;
-  authorAvatar: string;
-  createdAt: string;
-  likes: number;
-  isLiked: boolean;
-  isSaved: boolean;
-}
+import { Recipe } from "@/types/recipe";
 
 export const recipes: Recipe[] = [
   {
@@ -57,6 +37,30 @@ export const recipes: Recipe[] = [
     likes: 245,
     isLiked: false,
     isSaved: false,
+    comments: [
+      {
+        id: "c1",
+        userId: "2",
+        userName: "Dawit Haile",
+        userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200",
+        text: "I tried this recipe last weekend and it was amazing! The berbere spice really makes a difference.",
+        createdAt: "2023-10-05T09:15:00Z"
+      },
+      {
+        id: "c2",
+        userId: "3",
+        userName: "Tigist Bekele",
+        userAvatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200",
+        text: "My family loved this! I added a bit more garlic and it turned out perfect.",
+        createdAt: "2023-11-12T16:30:00Z"
+      }
+    ],
+    ratings: [
+      { userId: "2", value: 5 },
+      { userId: "3", value: 4 },
+      { userId: "4", value: 5 }
+    ],
+    averageRating: 4.7
   },
   {
     id: "2",
@@ -89,6 +93,21 @@ export const recipes: Recipe[] = [
     likes: 189,
     isLiked: true,
     isSaved: true,
+    comments: [
+      {
+        id: "c3",
+        userId: "1",
+        userName: "Makeda Abebe",
+        userAvatar: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=200",
+        text: "Perfect injera recipe! The fermentation time is key for that authentic taste.",
+        createdAt: "2023-10-10T14:20:00Z"
+      }
+    ],
+    ratings: [
+      { userId: "1", value: 5 },
+      { userId: "4", value: 4 }
+    ],
+    averageRating: 4.5
   },
   {
     id: "3",
@@ -123,6 +142,11 @@ export const recipes: Recipe[] = [
     likes: 132,
     isLiked: false,
     isSaved: false,
+    comments: [],
+    ratings: [
+      { userId: "2", value: 4 }
+    ],
+    averageRating: 4.0
   },
   {
     id: "4",
@@ -159,6 +183,21 @@ export const recipes: Recipe[] = [
     likes: 178,
     isLiked: false,
     isSaved: true,
+    comments: [
+      {
+        id: "c4",
+        userId: "1",
+        userName: "Makeda Abebe",
+        userAvatar: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=200",
+        text: "This is my go-to recipe during fasting periods. So flavorful!",
+        createdAt: "2023-12-20T10:45:00Z"
+      }
+    ],
+    ratings: [
+      { userId: "1", value: 5 },
+      { userId: "3", value: 4 }
+    ],
+    averageRating: 4.5
   },
   {
     id: "5",
@@ -196,6 +235,23 @@ export const recipes: Recipe[] = [
     likes: 210,
     isLiked: true,
     isSaved: false,
+    restaurantId: "1",
+    comments: [
+      {
+        id: "c5",
+        userId: "2",
+        userName: "Dawit Haile",
+        userAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200",
+        text: "I love the simplicity of this recipe. The rosemary adds such a nice flavor!",
+        createdAt: "2024-02-01T15:10:00Z"
+      }
+    ],
+    ratings: [
+      { userId: "1", value: 5 },
+      { userId: "2", value: 5 },
+      { userId: "4", value: 4 }
+    ],
+    averageRating: 4.7
   },
 ];
 

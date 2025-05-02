@@ -1,77 +1,102 @@
-export interface User {
+export interface Ingredient {
   id: string;
   name: string;
-  phone: string;
-  email?: string;
-  profileImage?: string;
-  role: UserRole;
-  createdAt: string;
-  favorites: string[];
-  restaurantId?: string; // Only for restaurant owners
-  avatarUrl?: string;
+  amount: string;
+  unit?: string;
 }
 
-export type UserRole = "customer" | "restaurant_owner" | "admin";
+export interface Step {
+  id: string;
+  description: string;
+  imageUrl?: string;
+}
+
+export interface Comment {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface Rating {
+  userId: string;
+  value: number; // 1-5
+}
 
 export interface Recipe {
   id: string;
   title: string;
   description: string;
-  ingredients: Ingredient[];
-  instructions: string[];
-  cookingTime: number;
+  imageUrl: string;
+  prepTime: number; // in minutes
+  cookTime: number; // in minutes
   servings: number;
   difficulty: "easy" | "medium" | "hard";
-  imageUrl: string;
-  category: string;
+  ingredients: Ingredient[];
+  steps: Step[];
+  region?: string;
+  tags: string[];
   authorId: string;
   authorName: string;
-  authorImage?: string;
-  rating: number;
-  reviewCount: number;
-  createdAt: string;
-  updatedAt: string;
-  restaurantId?: string; // If the recipe is from a restaurant
-  authorAvatar: string;
-  prepTime: number; // Added prepTime property
-  cookTime: number;
-  isLiked: boolean;
-  isSaved: boolean;
-  region?: string;
-  tags?: string[];
-  steps: Step[];
-  likes: number;
-}
-
-export interface Review {
-  id: string;
-  recipeId: string;
-  userId: string;
-  userName: string;
-  userImage?: string;
-  rating: number;
-  comment: string;
+  authorAvatar?: string;
   createdAt: string;
   likes: number;
+  isLiked?: boolean;
+  isSaved?: boolean;
+  comments: Comment[];
+  ratings: Rating[];
+  averageRating?: number;
+  restaurantId?: string; // If recipe belongs to a restaurant
 }
 
-export interface Category {
+export interface User {
   id: string;
   name: string;
-  imageUrl: string;
+  phone: string;
+  avatar?: string;
+  bio?: string;
+  location?: string;
+  email?: string;
+  recipes: string[]; // Recipe IDs
+  savedRecipes: string[]; // Recipe IDs
+  followers: number;
+  following: number;
+  role: "user" | "admin" | "restaurant";
+  restaurantId?: string; // If user is a restaurant admin
 }
 
-export type Step = {
+export interface Restaurant {
   id: string;
+  name: string;
   description: string;
-  imageUrl?: string;
-};
+  logo?: string;
+  coverImage?: string;
+  location: string;
+  phone: string;
+  email?: string;
+  website?: string;
+  openingHours?: string;
+  adminIds: string[]; // User IDs of admins
+  recipeIds: string[]; // Recipe IDs of restaurant recipes
+  menuCategories: MenuCategory[];
+  followers: number;
+  rating: number;
+  verified: boolean;
+}
 
-export type Ingredient = {
+export interface MenuCategory {
   id: string;
   name: string;
-  amount: string;
-  unit: string;
-};
+  items: MenuItem[];
+}
 
-// Removed duplicate local Step type declaration
+export interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  imageUrl?: string;
+  recipeId?: string; // Optional link to full recipe
+}

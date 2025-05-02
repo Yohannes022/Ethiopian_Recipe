@@ -7,13 +7,13 @@
 
 import React from "react";
 import { Tabs } from "expo-router";
-import { Home, Search, MapPin, PlusSquare, User, ShoppingBag } from "lucide-react-native";
-import colors from "@/constants/colors";
-import { useOrderStore } from "@/store/orderStore";
+import { Home, Search, PlusSquare, User, Store, BarChart2 } from "lucide-react-native";
+import colors from "@/constants/Colors";
+import { useAuthStore } from "@/store/authStore";
 
 export default function TabLayout() {
-  const { getCartItemCount } = useOrderStore();
-  const cartItemCount = getCartItemCount();
+  const { user, isAdmin, isRestaurantOwner } = useAuthStore();
+  const showRestaurantTab = user && (isAdmin() || isRestaurantOwner());
 
   return (
     <Tabs
@@ -50,30 +50,30 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="restaurants"
-        options={{
-          title: "Restaurants",
-          tabBarIcon: ({ color }) => <MapPin size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="cart"
-        options={{
-          title: "Cart",
-          tabBarIcon: ({ color }) => <ShoppingBag size={22} color={color} />,
-          tabBarBadge: cartItemCount > 0 ? cartItemCount : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: colors.primary,
-          },
-        }}
-      />
-      <Tabs.Screen
         name="create"
         options={{
           title: "Create",
           tabBarIcon: ({ color }) => <PlusSquare size={22} color={color} />,
         }}
       />
+      {showRestaurantTab && (
+        <Tabs.Screen
+          name="restaurants"
+          options={{
+            title: "Restaurants",
+            tabBarIcon: ({ color }) => <Store size={22} color={color} />,
+          }}
+        />
+      )}
+      {showRestaurantTab && (
+        <Tabs.Screen
+          name="dashboard"
+          options={{
+            title: "Dashboard",
+            tabBarIcon: ({ color }) => <BarChart2 size={22} color={color} />,
+          }}
+        />
+      )}
       <Tabs.Screen
         name="profile"
         options={{

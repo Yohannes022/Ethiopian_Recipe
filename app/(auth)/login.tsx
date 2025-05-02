@@ -9,12 +9,13 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { useAuthStore } from "@/store/authStore";
 
@@ -23,6 +24,7 @@ export default function LoginScreen() {
   const { login, isLoading, error } = useAuthStore();
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
+  const [userType, setUserType] = useState<"user" | "restaurant">("user");
 
   const validatePhone = () => {
     if (!phone) {
@@ -43,7 +45,7 @@ export default function LoginScreen() {
     if (!validatePhone()) return;
     
     try {
-      await login(phone);
+      await login(phone, userType);
       router.push("/verify");
     } catch (error) {
       console.error("Login error:", error);
@@ -73,6 +75,41 @@ export default function LoginScreen() {
               <Text style={styles.subtitle}>
                 Enter your phone number to continue
               </Text>
+            </View>
+
+            <View style={styles.userTypeContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.userTypeButton,
+                  userType === "user" && styles.activeUserTypeButton,
+                ]}
+                onPress={() => setUserType("user")}
+              >
+                <Text
+                  style={[
+                    styles.userTypeText,
+                    userType === "user" && styles.activeUserTypeText,
+                  ]}
+                >
+                  Regular User
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.userTypeButton,
+                  userType === "restaurant" && styles.activeUserTypeButton,
+                ]}
+                onPress={() => setUserType("restaurant")}
+              >
+                <Text
+                  style={[
+                    styles.userTypeText,
+                    userType === "restaurant" && styles.activeUserTypeText,
+                  ]}
+                >
+                  Restaurant Owner
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.form}>
@@ -126,7 +163,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginTop: 20,
-    marginBottom: 40,
+    marginBottom: 30,
   },
   logo: {
     width: 120,
@@ -142,6 +179,35 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.lightText,
     textAlign: "center",
+  },
+  userTypeContainer: {
+    flexDirection: "row",
+    marginBottom: 24,
+    borderRadius: 8,
+    backgroundColor: colors.inputBackground,
+    padding: 4,
+  },
+  userTypeButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 6,
+  },
+  activeUserTypeButton: {
+    backgroundColor: colors.white,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  userTypeText: {
+    ...typography.body,
+    color: colors.lightText,
+  },
+  activeUserTypeText: {
+    color: colors.primary,
+    fontWeight: "600",
   },
   form: {
     marginBottom: 24,

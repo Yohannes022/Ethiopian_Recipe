@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Filter } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import SearchBar from "@/components/SearchBar";
 import RecipeCard from "@/components/RecipeCard";
@@ -57,6 +57,10 @@ export default function SearchScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.searchHeader}>
+        {/* Make sure SearchBar accepts these props; if not, update the SearchBar component accordingly */}
+        {/* Ensure that "@/components/SearchBar" exports a component that accepts value, onChangeText, onClear, and placeholder props.
+            If not, update the SearchBar component accordingly. */}
+        {/* Make sure that "@/components/SearchBar" exports a SearchBar component that accepts value, onChangeText, onClear, and placeholder props */}
         <SearchBar
           value={searchQuery}
           onChangeText={setSearchQuery}

@@ -1,15 +1,36 @@
-import { createTRPCRouter } from "./create-context";
-import hiRoute from "./routes/example/hi/route";
-import { loginProcedure } from "./routes/auth/login/route";
-import { verifyProcedure } from "./routes/auth/verify/route";
+import { router } from "./create-context";
+import hiProcedure  from "./routes/example/hi/route";
+import { loginProcedure, verifyOtpProcedure } from "./routes/auth/login/login";
+import { 
+  addCommentProcedure, 
+  deleteCommentProcedure, 
+  getCommentsProcedure 
+} from "./routes/recipes/comments"; // Make sure this file exists: backend/trpc/routes/recipes/comments.ts
+import { 
+  addRatingProcedure, 
+  getRatingsProcedure, 
+  getUserRatingProcedure 
+} from "./routes/recipes/ratings";
 
-export const appRouter = createTRPCRouter({
-  example: createTRPCRouter({
-    hi: hiRoute,
+export const appRouter = router({
+  example: router({
+    hi: hiProcedure,
   }),
-  auth: createTRPCRouter({
+  auth: router({
     login: loginProcedure,
-    verify: verifyProcedure,
+    verifyOtp: verifyOtpProcedure,
+  }),
+  recipes: router({
+    comments: router({
+      add: addCommentProcedure,
+      delete: deleteCommentProcedure,
+      getAll: getCommentsProcedure,
+    }),
+    ratings: router({
+      add: addRatingProcedure,
+      getAll: getRatingsProcedure,
+      getUserRating: getUserRatingProcedure,
+    }),
   }),
 });
 

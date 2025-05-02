@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -8,6 +8,8 @@ import {
   Share,
   Alert,
   Platform,
+  TextInput,
+  KeyboardAvoidingView,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -22,19 +24,27 @@ import {
   MoreVertical,
   Edit,
   Trash2,
+  Send,
+  MessageCircle,
 } from "lucide-react-native";
 import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import { useRecipeStore } from "@/store/recipeStore";
 import { useAuthStore } from "@/store/authStore";
 import CategoryPill from "@/components/CategoryPill";
+import CommentItem from "@/components/CommentItem";
+import StarRating from "@/components/StarRating";
 
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { recipes, toggleLike, toggleSave, deleteRecipe } = useRecipeStore();
-  const { user } = useAuthStore();
+  const { recipes, toggleLike, toggleSave, deleteRecipe, addComment, deleteComment, addRating } = useRecipeStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [showOptions, setShowOptions] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [showRating, setShowRating] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const recipe = recipes.find((r) => r.id === id);
 
@@ -54,6 +64,7 @@ export default function RecipeDetailScreen() {
 
   const isOwner = user?.id === recipe.authorId;
   const totalTime = recipe.prepTime + recipe.cookTime;
+  const userRating = user ? recipe.ratings.find(r => r.userId === user.id)?.value : undefined;
 
   const handleShare = async () => {
     try {
@@ -68,7 +79,7 @@ export default function RecipeDetailScreen() {
 
   const handleEdit = () => {
     setShowOptions(false);
-    router.push(`/edit-recipe/${recipe.id}`);
+    router.push(`/recipe/${recipe.id}/edit`);
   };
 
   const handleDelete = () => {
@@ -93,9 +104,67 @@ export default function RecipeDetailScreen() {
     );
   };
 
+  const handleSubmitComment = () => {
+    if (!isAuthenticated) {
+      Alert.alert("Sign In Required", "Please sign in to comment on recipes.");
+      return;
+    }
+
+    if (newComment.trim()) {
+      addComment(recipe.id, newComment.trim());
+      setNewComment("");
+    }
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    Alert.alert(
+      "Delete Comment",
+      "Are you sure you want to delete this comment?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: () => deleteComment(recipe.id, commentId),
+          style: "destructive",
+        },
+      ]
+    );
+  };
+
+  const handleRateRecipe = (rating: number) => {
+    if (!isAuthenticated) {
+      Alert.alert("Sign In Required", "Please sign in to rate recipes.");
+      return;
+    }
+
+    addRating(recipe.id, rating);
+    setShowRating(false);
+  };
+
+  const toggleCommentsSection = () => {
+    setShowComments(!showComments);
+    if (!showComments) {
+      // Scroll to comments section when opening
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={styles.container}
+      keyboardVerticalOffset={100}
+    >
+      <ScrollView 
+        ref={scrollViewRef}
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.imageContainer}>
           <Image
             source={{ uri: recipe.imageUrl }}
@@ -121,7 +190,10 @@ export default function RecipeDetailScreen() {
 
           {showOptions && isOwner && (
             <View style={styles.optionsMenu}>
-              <TouchableOpacity style={styles.optionItem} onPress={handleEdit}>
+              <TouchableOpacity
+                style={styles.optionItem}
+                onPress={handleEdit}
+              >
                 <Edit size={20} color={colors.text} />
                 <Text style={styles.optionText}>Edit Recipe</Text>
               </TouchableOpacity>
@@ -149,6 +221,39 @@ export default function RecipeDetailScreen() {
               <Text style={styles.authorName}>{recipe.authorName}</Text>
             </View>
           </View>
+
+          <View style={styles.ratingSection}>
+            {(recipe.averageRating ?? 0) > 0 && (
+              <View style={styles.ratingDisplay}>
+                <StarRating rating={recipe.averageRating ?? 0} size={18} showLabel />
+                <Text style={styles.ratingCount}>
+                  ({recipe.ratings.length} {recipe.ratings.length === 1 ? "rating" : "ratings"})
+                </Text>
+              </View>
+            )}
+            
+            <TouchableOpacity
+              style={styles.rateButton}
+              onPress={() => setShowRating(!showRating)}
+            >
+              <Text style={styles.rateButtonText}>
+                {userRating ? "Update Rating" : "Rate Recipe"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {showRating && (
+            <View style={styles.ratingInputContainer}>
+              <Text style={styles.ratingInputLabel}>Your Rating:</Text>
+              <StarRating
+                rating={userRating || 0}
+                editable
+                size={32}
+                onRatingChange={handleRateRecipe}
+                style={styles.ratingInput}
+              />
+            </View>
+          )}
 
           <View style={styles.metaContainer}>
             <View style={styles.metaItem}>
@@ -180,7 +285,7 @@ export default function RecipeDetailScreen() {
                   recipe.isLiked && { color: colors.primary },
                 ]}
               >
-                {recipe.likes || 0}
+                {recipe.likes}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -201,7 +306,28 @@ export default function RecipeDetailScreen() {
                 Save
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={toggleCommentsSection}
+            >
+              <MessageCircle
+                size={20}
+                color={showComments ? colors.primary : colors.lightText}
+                fill={showComments ? colors.primary : "none"}
+              />
+              <Text
+                style={[
+                  styles.actionText,
+                  showComments && { color: colors.primary },
+                ]}
+              >
+                {recipe.comments.length}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={handleShare}
+            >
               <Share2 size={20} color={colors.lightText} />
               <Text style={styles.actionText}>Share</Text>
             </TouchableOpacity>
@@ -225,7 +351,7 @@ export default function RecipeDetailScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.tagsScrollContent}
             >
-              {(recipe.tags ?? []).map((tag) => (
+              {recipe.tags.map((tag) => (
                 <CategoryPill
                   key={tag}
                   title={tag}
@@ -260,7 +386,7 @@ export default function RecipeDetailScreen() {
                   <Text style={styles.stepText}>{step.description}</Text>
                   {step.imageUrl && (
                     <Image
-                      source={{ uri: step.imageUrl || "" }}
+                      source={{ uri: step.imageUrl }}
                       style={styles.stepImage}
                       contentFit="cover"
                     />
@@ -269,9 +395,49 @@ export default function RecipeDetailScreen() {
               </View>
             ))}
           </View>
+
+          {showComments && (
+            <View style={styles.commentsSection}>
+              <Text style={styles.sectionTitle}>Comments</Text>
+              
+              <View style={styles.commentInputContainer}>
+                <TextInput
+                  style={styles.commentInput}
+                  placeholder="Add a comment..."
+                  value={newComment}
+                  onChangeText={setNewComment}
+                  multiline
+                />
+                <TouchableOpacity
+                  style={[
+                    styles.sendButton,
+                    !newComment.trim() && styles.disabledSendButton,
+                  ]}
+                  onPress={handleSubmitComment}
+                  disabled={!newComment.trim()}
+                >
+                  <Send size={20} color={colors.white} />
+                </TouchableOpacity>
+              </View>
+              
+              {recipe.comments.length > 0 ? (
+                recipe.comments.map((comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    onDelete={handleDeleteComment}
+                  />
+                ))
+              ) : (
+                <Text style={styles.noCommentsText}>
+                  No comments yet. Be the first to comment!
+                </Text>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -379,6 +545,46 @@ const styles = StyleSheet.create({
   authorName: {
     ...typography.body,
     fontWeight: "500",
+  },
+  ratingSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  ratingDisplay: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  ratingCount: {
+    ...typography.caption,
+    color: colors.lightText,
+    marginLeft: 8,
+  },
+  rateButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: colors.inputBackground,
+    borderRadius: 16,
+  },
+  rateButtonText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: "600",
+  },
+  ratingInputContainer: {
+    backgroundColor: colors.inputBackground,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  ratingInputLabel: {
+    ...typography.bodySmall,
+    marginBottom: 8,
+  },
+  ratingInput: {
+    marginTop: 8,
   },
   metaContainer: {
     flexDirection: "row",
@@ -501,5 +707,43 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 8,
     marginTop: 8,
+  },
+  commentsSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.divider,
+  },
+  commentInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  commentInput: {
+    flex: 1,
+    backgroundColor: colors.inputBackground,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginRight: 8,
+    ...typography.body,
+  },
+  sendButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  disabledSendButton: {
+    backgroundColor: colors.lightText,
+    opacity: 0.5,
+  },
+  noCommentsText: {
+    ...typography.body,
+    color: colors.lightText,
+    textAlign: "center",
+    padding: 20,
   },
 });

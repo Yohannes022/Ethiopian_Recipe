@@ -13,7 +13,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, Plus, X } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import Input from "@/components/Input";
 import Button from "@/components/Button";
@@ -179,7 +179,7 @@ export default function EditRecipeScreen() {
         difficulty,
         ingredients,
         steps,
-        region: region || undefined,
+        region: region || "", // Ensure region is always a string
         tags: selectedTags.length > 0 ? selectedTags : ["traditional"],
       });
 
@@ -384,7 +384,7 @@ export default function EditRecipeScreen() {
                 />
                 <Input
                   placeholder="Unit (optional)"
-                  value={ingredient.unit}
+                  value={ingredient.unit || ""}
                   onChangeText={(text) =>
                     updateIngredient(ingredient.id, "unit", text)
                   }

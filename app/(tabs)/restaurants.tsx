@@ -3,7 +3,7 @@
  * Shows a list of restaurants with filtering and search options
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   View,
@@ -11,228 +11,177 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
-  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Filter, MapPin } from "lucide-react-native";
-import colors from "@/constants/colors";
+import { Image } from "expo-image";
+import { Plus, ChevronRight, Store, Edit, Settings } from "lucide-react-native";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
-import SearchBar from "@/components/SearchBar";
-import RestaurantCard from "@/components/restaurant/RestaurantCard";
-import CategoryPill from "@/components/CategoryPill";
+import Button from "@/components/Button";
+import { useAuthStore } from "@/store/authStore";
 import { useRestaurantStore } from "@/store/restaurantStore";
-import { useLocationStore } from "@/store/locationStore";
+import StarRating from "@/components/StarRating";
 
 export default function RestaurantsScreen() {
   const router = useRouter();
-  const {
-    restaurants,
-    filteredRestaurants,
-    searchQuery,
-    selectedCuisineType,
-    selectedPriceRange,
-    setSearchQuery,
-    setSelectedCuisineType,
-    setSelectedPriceRange,
-    filterRestaurants,
-  } = useRestaurantStore();
-  
-  const {
-    userLocation,
-    getCurrentLocation,
-    isLoadingLocation,
-    locationError,
-    getNearbyRestaurants,
-  } = useLocationStore();
-  
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  
-  // Get unique cuisine types from all restaurants
-  const cuisineTypes = Array.from(
-    new Set(restaurants.flatMap((restaurant) => restaurant.cuisineType))
-  );
-  
-  // Price range options
-  const priceRanges = [
-    { id: "low", label: "$" },
-    { id: "medium", label: "$$" },
-    { id: "high", label: "$$$" },
-  ];
-  
-  // Get nearby restaurants
-  const nearbyRestaurants = userLocation
-    ? getNearbyRestaurants(filteredRestaurants)
-    : filteredRestaurants;
-  
-  // Request location on mount
-  useEffect(() => {
-    getCurrentLocation();
-  }, []);
-  
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await getCurrentLocation();
-    filterRestaurants();
-    setIsRefreshing(false);
+  const { user, isAdmin, isRestaurantOwner } = useAuthStore();
+  const { restaurants, getRestaurantById } = useRestaurantStore();
+  const [activeTab, setActiveTab] = useState<"all" | "mine">("mine");
+
+  // Get user's restaurant if they are a restaurant owner
+  const userRestaurant = user?.restaurantId 
+    ? getRestaurantById(user.restaurantId) 
+    : undefined;
+
+  // Filter restaurants based on active tab
+  const displayedRestaurants = activeTab === "all" 
+    ? restaurants 
+    : userRestaurant 
+      ? [userRestaurant] 
+      : [];
+
+  const handleAddRestaurant = () => {
+    // In a real app, this would navigate to a restaurant creation screen
+    alert("Add restaurant functionality would be implemented here");
   };
-  
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
+
+  const handleManageRestaurant = (restaurantId: string) => {
+    router.push(`/restaurant/${restaurantId}/manage`);
   };
-  
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
+
+  const handleViewRestaurant = (restaurantId: string) => {
+    router.push(`/restaurant/${restaurantId}`);
   };
-  
-  const handleCuisineSelect = (cuisine: string) => {
-    if (selectedCuisineType === cuisine) {
-      setSelectedCuisineType(null);
-    } else {
-      setSelectedCuisineType(cuisine);
-    }
+
+  const renderRestaurantCard = ({ item: restaurant }: { item: any }) => {
+    const isOwner = user?.restaurantId === restaurant.id || isAdmin();
+    
+    return (
+      <TouchableOpacity
+        style={styles.restaurantCard}
+        onPress={() => handleViewRestaurant(restaurant.id)}
+        activeOpacity={0.8}
+      >
+        <Image
+          source={{ uri: restaurant.coverImage }}
+          style={styles.coverImage}
+          contentFit="cover"
+        />
+        
+        <View style={styles.logoContainer}>
+          <Image
+            source={{ uri: restaurant.logo }}
+            style={styles.logo}
+            contentFit="cover"
+          />
+        </View>
+        
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.restaurantName}>{restaurant.name}</Text>
+            {restaurant.verified && (
+              <View style={styles.verifiedBadge}>
+                <Text style={styles.verifiedText}>Verified</Text>
+              </View>
+            )}
+          </View>
+          
+          <Text style={styles.restaurantLocation}>{restaurant.location}</Text>
+          
+          <View style={styles.ratingContainer}>
+            <StarRating rating={restaurant.rating} size={16} showLabel />
+            <Text style={styles.followersText}>{restaurant.followers} followers</Text>
+          </View>
+          
+          {isOwner && (
+            <Button
+              title="Manage Restaurant"
+              variant="admin"
+              size="small"
+              onPress={() => handleManageRestaurant(restaurant.id)}
+              icon={<Settings size={16} color={colors.white} />}
+              style={styles.manageButton}
+            />
+          )}
+        </View>
+      </TouchableOpacity>
+    );
   };
-  
-  const handlePriceRangeSelect = (priceRange: string) => {
-    if (selectedPriceRange === priceRange) {
-      setSelectedPriceRange(null);
-    } else {
-      setSelectedPriceRange(priceRange);
-    }
-  };
-  
-  const clearFilters = () => {
-    setSelectedCuisineType(null);
-    setSelectedPriceRange(null);
-  };
-  
-  const renderRestaurantItem = ({ item }: { item: any }) => (
-    <RestaurantCard restaurant={item} variant="vertical" />
-  );
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Restaurants</Text>
-        
-        <View style={styles.locationContainer}>
-          <MapPin size={16} color={colors.primary} />
-          <Text style={styles.locationText} numberOfLines={1}>
-            {userLocation?.address || "Getting your location..."}
-          </Text>
-        </View>
-      </View>
-      
-      <View style={styles.searchContainer}>
-        <SearchBar
-          placeholder="Search restaurants, cuisines..."
-          value={searchQuery}
-          onChangeText={handleSearch}
-          style={styles.searchBar}
-        />
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            showFilters && styles.activeFilterButton,
-          ]}
-          onPress={toggleFilters}
-        >
-          <Filter
-            size={20}
-            color={showFilters ? colors.white : colors.text}
+        {isAdmin() && (
+          <Button
+            title="Add"
+            variant="primary"
+            size="small"
+            onPress={handleAddRestaurant}
+            icon={<Plus size={16} color={colors.white} />}
           />
-        </TouchableOpacity>
+        )}
       </View>
-      
-      {showFilters && (
-        <View style={styles.filtersContainer}>
-          <View style={styles.filterSection}>
-            <View style={styles.filterHeader}>
-              <Text style={styles.filterTitle}>Cuisine</Text>
-              {selectedCuisineType && (
-                <TouchableOpacity onPress={clearFilters}>
-                  <Text style={styles.clearText}>Clear</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.cuisineContainer}
+
+      {(isRestaurantOwner() || isAdmin()) && (
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "mine" && styles.activeTabButton,
+            ]}
+            onPress={() => setActiveTab("mine")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "mine" && styles.activeTabText,
+              ]}
             >
-              {cuisineTypes.map((cuisine) => (
-                <CategoryPill
-                  key={cuisine}
-                  title={cuisine}
-                  isSelected={selectedCuisineType === cuisine}
-                  onPress={() => handleCuisineSelect(cuisine)}
-                />
-              ))}
-            </ScrollView>
-          </View>
-          
-          <View style={styles.filterSection}>
-            <Text style={styles.filterTitle}>Price Range</Text>
-            <View style={styles.priceRangeContainer}>
-              {priceRanges.map((range) => (
-                <TouchableOpacity
-                  key={range.id}
-                  style={[
-                    styles.priceRangeButton,
-                    selectedPriceRange === range.id && styles.selectedPriceRange,
-                  ]}
-                  onPress={() => handlePriceRangeSelect(range.id)}
-                >
-                  <Text
-                    style={[
-                      styles.priceRangeText,
-                      selectedPriceRange === range.id && styles.selectedPriceRangeText,
-                    ]}
-                  >
-                    {range.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+              My Restaurants
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "all" && styles.activeTabButton,
+            ]}
+            onPress={() => setActiveTab("all")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "all" && styles.activeTabText,
+              ]}
+            >
+              All Restaurants
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
-      
-      <FlatList
-        data={nearbyRestaurants}
-        renderItem={renderRestaurantItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        ListHeaderComponent={
-          <View style={styles.listHeader}>
-            <Text style={styles.sectionTitle}>
-              {userLocation ? "Nearby Restaurants" : "All Restaurants"}
-            </Text>
-            {locationError && (
-              <Text style={styles.errorText}>
-                {locationError}. Showing all restaurants.
-              </Text>
-            )}
-          </View>
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>No Restaurants Found</Text>
-            <Text style={styles.emptyText}>
-              Try adjusting your filters or search query
-            </Text>
-          </View>
-        }
-      />
+
+      {displayedRestaurants.length > 0 ? (
+        <FlatList
+          data={displayedRestaurants}
+          renderItem={renderRestaurantCard}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <View style={styles.emptyContainer}>
+          <Store size={64} color={colors.lightText} />
+          <Text style={styles.emptyTitle}>No restaurants found</Text>
+          {isAdmin() && (
+            <Button
+              title="Add Restaurant"
+              variant="primary"
+              onPress={handleAddRestaurant}
+              style={styles.addButton}
+            />
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -241,117 +190,132 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    padding: 20,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  title: {
-    ...typography.heading1,
-    marginBottom: 8,
-  },
-  locationContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  locationText: {
-    ...typography.bodySmall,
-    color: colors.lightText,
-    marginLeft: 6,
-  },
-  searchContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  searchBar: {
-    flex: 1,
-    marginRight: 12,
-  },
-  filterButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.inputBackground,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  activeFilterButton: {
-    backgroundColor: colors.primary,
-  },
-  filtersContainer: {
-    backgroundColor: colors.white,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
-  },
-  filterSection: {
-    marginBottom: 16,
-  },
-  filterHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 20,
   },
-  filterTitle: {
-    ...typography.heading4,
+  title: {
+    ...typography.heading2,
   },
-  clearText: {
-    ...typography.bodySmall,
-    color: colors.primary,
-  },
-  cuisineContainer: {
-    paddingBottom: 8,
-  },
-  priceRangeContainer: {
+  tabsContainer: {
     flexDirection: "row",
-  },
-  priceRangeButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
+    marginBottom: 20,
+    borderRadius: 8,
     backgroundColor: colors.inputBackground,
-    marginRight: 12,
+    padding: 4,
   },
-  selectedPriceRange: {
-    backgroundColor: colors.primary,
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 6,
   },
-  priceRangeText: {
+  activeTabButton: {
+    backgroundColor: colors.white,
+  },
+  tabText: {
     ...typography.bodySmall,
+    color: colors.lightText,
+  },
+  activeTabText: {
+    color: colors.primary,
     fontWeight: "600",
   },
-  selectedPriceRangeText: {
-    color: colors.white,
-  },
   listContent: {
-    paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  listHeader: {
-    marginVertical: 16,
+  restaurantCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    overflow: "hidden",
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  sectionTitle: {
+  coverImage: {
+    height: 120,
+    width: "100%",
+  },
+  logoContainer: {
+    position: "absolute",
+    top: 90,
+    left: 20,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: colors.white,
+    backgroundColor: colors.white,
+    elevation: 4,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  logo: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  cardContent: {
+    padding: 20,
+    paddingTop: 40,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  restaurantName: {
     ...typography.heading3,
   },
-  errorText: {
+  verifiedBadge: {
+    backgroundColor: colors.success,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  verifiedText: {
     ...typography.caption,
-    color: colors.error,
-    marginTop: 4,
+    color: colors.white,
+    fontWeight: "600",
+  },
+  restaurantLocation: {
+    ...typography.bodySmall,
+    color: colors.lightText,
+    marginBottom: 12,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  followersText: {
+    ...typography.caption,
+    color: colors.lightText,
+    marginLeft: 16,
+  },
+  manageButton: {
+    alignSelf: "flex-start",
   },
   emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    padding: 40,
+    padding: 20,
   },
   emptyTitle: {
     ...typography.heading3,
-    marginBottom: 8,
+    marginTop: 16,
+    marginBottom: 24,
   },
-  emptyText: {
-    ...typography.body,
-    color: colors.lightText,
-    textAlign: "center",
+  addButton: {
+    width: 200,
   },
 });

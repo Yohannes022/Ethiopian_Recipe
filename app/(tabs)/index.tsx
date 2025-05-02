@@ -11,7 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { ChevronRight } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import RecipeCard from "@/components/RecipeCard";
 import CategoryPill from "@/components/CategoryPill";

@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, Image, SafeAreaView } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import Button from "@/components/Button";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 
 export default function WelcomeScreen() {

@@ -4,77 +4,53 @@
  * Allows users to browse menu, place orders, and view restaurant details
  * Provides filtering by category and detailed restaurant information
  */
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  FlatList,
-  Dimensions,
+  Linking,
   Platform,
 } from "react-native";
-import { useLocalSearchParams, useRouter, Stack } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  Star,
-  Clock,
-  MapPin,
   ChevronLeft,
   Phone,
   Mail,
-  Share2,
+  Globe,
+  Clock,
+  MapPin,
   Heart,
-  Bookmark,
-  Info,
+  Settings,
 } from "lucide-react-native";
 import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import Button from "@/components/Button";
-import MenuItemCard from "@/components/restaurant/MenuItemCard";
-import ReviewCard from "@/components/restaurant/ReviewCard";
+import RecipeCard from "@/components/RecipeCard";
+import StarRating from "@/components/StarRating";
 import { useRestaurantStore } from "@/store/restaurantStore";
-import { useOrderStore } from "@/store/orderStore";
-import { useLocationStore } from "@/store/locationStore";
-import { MenuItem } from "@/types/restaurant";
-
-const { width } = Dimensions.get("window");
+import { useRecipeStore } from "@/store/recipeStore";
+import { useAuthStore } from "@/store/authStore";
 
 export default function RestaurantDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { 
-    getRestaurantById, 
-    getMenuItemsByRestaurantId, 
-    getReviewsByRestaurantId 
-  } = useRestaurantStore();
-  const { addToCart, getCartItemCount } = useOrderStore();
-  const { userLocation, calculateDistance } = useLocationStore();
+  const { getRestaurantById, followRestaurant, unfollowRestaurant } = useRestaurantStore();
+  const { getRestaurantRecipes } = useRecipeStore();
+  const { user, isAdmin, isRestaurantOwner } = useAuthStore();
   
-  // Get restaurant data
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"menu" | "recipes">("menu");
+  
   const restaurant = getRestaurantById(id);
-  const menuItems = getMenuItemsByRestaurantId(id);
-  const reviews = getReviewsByRestaurantId(id);
+  const restaurantRecipes = getRestaurantRecipes(id);
   
-  // UI state
-  const [activeTab, setActiveTab] = useState<"menu" | "reviews" | "info">("menu");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [distance, setDistance] = useState<number | null>(null);
-  const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
-  const cartItemCount = getCartItemCount();
-  
-  // Calculate distance when user location is available
-  useEffect(() => {
-    if (userLocation && restaurant?.location) {
-      const dist = calculateDistance(userLocation, restaurant.location);
-      setDistance(dist);
-    }
-  }, [userLocation, restaurant]);
-  
-  // Handle restaurant not found
+  const isOwner = user?.restaurantId === id || isAdmin();
+
   if (!restaurant) {
     return (
       <View style={styles.notFound}>
@@ -88,379 +64,260 @@ export default function RestaurantDetailScreen() {
       </View>
     );
   }
-  
-  // Get unique categories from menu items
-  const categories = Array.from(
-    new Set(menuItems.map((item) => item.category))
-  );
-  
-  // Filter menu items by category if selected
-  const filteredMenuItems = selectedCategory
-    ? menuItems.filter((item) => item.category === selectedCategory)
-    : menuItems;
-  
-  /**
-   * Format price range to display as $ symbols
-   * @param range - Price range string (low, medium, high)
-   */
-  const getPriceRange = (range: string) => {
-    switch (range) {
-      case "low":
-        return "$";
-      case "medium":
-        return "$$";
-      case "high":
-        return "$$$";
-      default:
-        return "$$";
+
+  const handleFollow = () => {
+    if (isFollowing) {
+      unfollowRestaurant(id);
+    } else {
+      followRestaurant(id);
+    }
+    setIsFollowing(!isFollowing);
+  };
+
+  const handleManage = () => {
+    router.push(`/restaurant/${id}/manage`);
+  };
+
+  const handleCall = () => {
+    Linking.openURL(`tel:${restaurant.phone}`);
+  };
+
+  const handleEmail = () => {
+    if (restaurant.email) {
+      Linking.openURL(`mailto:${restaurant.email}`);
     }
   };
-  
-  /**
-   * Add a menu item to the cart
-   * @param menuItem - Menu item to add
-   */
-  const handleAddToCart = (menuItem: MenuItem) => {
-    addToCart(menuItem, 1);
-    // Show confirmation or navigate to cart
+
+  const handleWebsite = () => {
+    if (restaurant.website) {
+      Linking.openURL(`https://${restaurant.website}`);
+    }
   };
-  
-  /**
-   * Handle menu item selection
-   * @param menuItem - Selected menu item
-   */
-  const handleMenuItemPress = (menuItem: MenuItem) => {
-    setSelectedMenuItem(menuItem);
-    // In a real app, this would open a modal with item details
-    // For now, just add to cart
-    handleAddToCart(menuItem);
-  };
-  
-  /**
-   * Handle sharing restaurant information
-   */
-  const handleShare = () => {
-    // Share restaurant info
+
+  const handleViewRecipe = (recipeId: string) => {
+    router.push(`/recipe/${recipeId}`);
   };
 
   return (
     <View style={styles.container}>
-      <Stack.Screen 
-        options={{
-          headerTransparent: true,
-          headerLeft: () => (
-            <TouchableOpacity
-              style={styles.backIconButton}
-              onPress={() => router.back()}
-            >
-              <ChevronLeft size={24} color={colors.white} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
-      
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Restaurant cover image */}
-        <View style={styles.imageContainer}>
+        <View style={styles.coverContainer}>
           <Image
-            source={{ uri: restaurant.coverImageUrl || restaurant.imageUrl }}
-            style={styles.image}
+            source={{ uri: restaurant.coverImage }}
+            style={styles.coverImage}
             contentFit="cover"
           />
           <LinearGradient
             colors={["rgba(0,0,0,0.7)", "transparent"]}
             style={styles.gradient}
           />
+          <TouchableOpacity
+            style={styles.backIconButton}
+            onPress={() => router.back()}
+          >
+            <ChevronLeft size={24} color={colors.white} />
+          </TouchableOpacity>
+          
+          {isOwner && (
+            <TouchableOpacity
+              style={styles.settingsButton}
+              onPress={handleManage}
+            >
+              <Settings size={24} color={colors.white} />
+            </TouchableOpacity>
+          )}
         </View>
 
-        <View style={styles.content}>
-          {/* Restaurant header information */}
-          <View style={styles.header}>
-            <Text style={styles.title}>{restaurant.name}</Text>
-            
-            <View style={styles.ratingContainer}>
-              <Star size={16} color={colors.secondary} fill={colors.secondary} />
-              <Text style={styles.rating}>{restaurant.rating}</Text>
-              <Text style={styles.reviewCount}>({restaurant.reviewCount} reviews)</Text>
-            </View>
-            
-            <View style={styles.cuisineContainer}>
-              {restaurant.cuisineType.map((cuisine, index) => (
-                <React.Fragment key={cuisine}>
-                  <Text style={styles.cuisine}>{cuisine}</Text>
-                  {index < restaurant.cuisineType.length - 1 && (
-                    <Text style={styles.cuisineDot}>•</Text>
-                  )}
-                </React.Fragment>
-              ))}
-              <Text style={styles.priceRange}>{getPriceRange(restaurant.priceRange)}</Text>
-            </View>
+        <View style={styles.headerContainer}>
+          <View style={styles.logoContainer}>
+            <Image
+              source={{ uri: restaurant.logo }}
+              style={styles.logo}
+              contentFit="cover"
+            />
           </View>
-
-          {/* Restaurant meta information */}
-          <View style={styles.metaContainer}>
-            <View style={styles.metaItem}>
-              <Clock size={16} color={colors.lightText} />
-              <Text style={styles.metaText}>
-                {restaurant.openingHours.open} - {restaurant.openingHours.close}
-              </Text>
-            </View>
-            
-            {distance !== null && (
-              <View style={styles.metaItem}>
-                <MapPin size={16} color={colors.lightText} />
-                <Text style={styles.metaText}>{distance.toFixed(1)} km</Text>
-              </View>
-            )}
-            
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>
-                {restaurant.isOpen ? "Open Now" : "Closed"}
-              </Text>
-            </View>
-          </View>
-
-          {/* Quick action buttons */}
-          <View style={styles.actions}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Phone size={20} color={colors.text} />
-              <Text style={styles.actionText}>Call</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <MapPin size={20} color={colors.text} />
-              <Text style={styles.actionText}>Directions</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton} onPress={handleShare}>
-              <Share2 size={20} color={colors.text} />
-              <Text style={styles.actionText}>Share</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.actionButton}>
-              <Heart size={20} color={colors.text} />
-              <Text style={styles.actionText}>Save</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Tab navigation */}
-          <View style={styles.tabsContainer}>
-            <TouchableOpacity
-              style={[
-                styles.tabButton,
-                activeTab === "menu" && styles.activeTabButton,
-              ]}
-              onPress={() => setActiveTab("menu")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "menu" && styles.activeTabText,
-                ]}
-              >
-                Menu
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                styles.tabButton,
-                activeTab === "reviews" && styles.activeTabButton,
-              ]}
-              onPress={() => setActiveTab("reviews")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "reviews" && styles.activeTabText,
-                ]}
-              >
-                Reviews
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                styles.tabButton,
-                activeTab === "info" && styles.activeTabButton,
-              ]}
-              onPress={() => setActiveTab("info")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "info" && styles.activeTabText,
-                ]}
-              >
-                Info
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Menu tab content */}
-          {activeTab === "menu" && (
-            <View style={styles.menuContainer}>
-              {/* Category filter */}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.categoriesContainer}
-              >
-                <TouchableOpacity
-                  style={[
-                    styles.categoryButton,
-                    selectedCategory === null && styles.selectedCategoryButton,
-                  ]}
-                  onPress={() => setSelectedCategory(null)}
-                >
-                  <Text
-                    style={[
-                      styles.categoryText,
-                      selectedCategory === null && styles.selectedCategoryText,
-                    ]}
-                  >
-                    All
-                  </Text>
-                </TouchableOpacity>
-                
-                {categories.map((category) => (
-                  <TouchableOpacity
-                    key={category}
-                    style={[
-                      styles.categoryButton,
-                      selectedCategory === category && styles.selectedCategoryButton,
-                    ]}
-                    onPress={() => setSelectedCategory(category)}
-                  >
-                    <Text
-                      style={[
-                        styles.categoryText,
-                        selectedCategory === category && styles.selectedCategoryText,
-                      ]}
-                    >
-                      {category}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-              
-              {/* Menu items grid */}
-              <View style={styles.menuItemsContainer}>
-                <FlatList
-                  data={filteredMenuItems}
-                  keyExtractor={(item) => item.id}
-                  renderItem={({ item }) => (
-                    <MenuItemCard
-                      menuItem={item}
-                      onPress={() => handleMenuItemPress(item)}
-                      variant="vertical"
-                    />
-                  )}
-                  numColumns={2}
-                  scrollEnabled={false}
-                />
-              </View>
-            </View>
-          )}
-
-          {/* Reviews tab content */}
-          {activeTab === "reviews" && (
-            <View style={styles.reviewsContainer}>
-              {reviews.length > 0 ? (
-                reviews.map((review) => (
-                  <ReviewCard key={review.id} review={review} />
-                ))
-              ) : (
-                <View style={styles.emptyReviews}>
-                  <Text style={styles.emptyReviewsTitle}>No Reviews Yet</Text>
-                  <Text style={styles.emptyReviewsText}>
-                    Be the first to review this restaurant
-                  </Text>
+          
+          <View style={styles.headerContent}>
+            <View style={styles.nameContainer}>
+              <Text style={styles.restaurantName}>{restaurant.name}</Text>
+              {restaurant.verified && (
+                <View style={styles.verifiedBadge}>
+                  <Text style={styles.verifiedText}>Verified</Text>
                 </View>
               )}
             </View>
-          )}
-
-          {/* Info tab content */}
-          {activeTab === "info" && (
-            <View style={styles.infoContainer}>
-              {/* About section */}
-              <View style={styles.infoSection}>
-                <Text style={styles.infoTitle}>About</Text>
-                <Text style={styles.infoText}>{restaurant.description}</Text>
-              </View>
-              
-              {/* Location section */}
-              <View style={styles.infoSection}>
-                <Text style={styles.infoTitle}>Location</Text>
-                <View style={styles.infoRow}>
-                  <MapPin size={16} color={colors.lightText} />
-                  <Text style={styles.infoText}>{restaurant.location.address}</Text>
-                </View>
-              </View>
-              
-              {/* Hours section */}
-              <View style={styles.infoSection}>
-                <Text style={styles.infoTitle}>Hours</Text>
-                <View style={styles.infoRow}>
-                  <Clock size={16} color={colors.lightText} />
-                  <Text style={styles.infoText}>
-                    {restaurant.openingHours.open} - {restaurant.openingHours.close}
-                  </Text>
-                </View>
-              </View>
-              
-              {/* Contact section */}
-              <View style={styles.infoSection}>
-                <Text style={styles.infoTitle}>Contact</Text>
-                <View style={styles.infoRow}>
-                  <Phone size={16} color={colors.lightText} />
-                  <Text style={styles.infoText}>{restaurant.contactPhone}</Text>
-                </View>
-                {restaurant.contactEmail && (
-                  <View style={styles.infoRow}>
-                    <Mail size={16} color={colors.lightText} />
-                    <Text style={styles.infoText}>{restaurant.contactEmail}</Text>
-                  </View>
-                )}
-              </View>
-              
-              {/* Delivery information section */}
-              <View style={styles.infoSection}>
-                <Text style={styles.infoTitle}>Delivery Information</Text>
-                <View style={styles.infoRow}>
-                  <Info size={16} color={colors.lightText} />
-                  <Text style={styles.infoText}>
-                    Delivery Fee: {restaurant.deliveryFee} ETB
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Info size={16} color={colors.lightText} />
-                  <Text style={styles.infoText}>
-                    Minimum Order: {restaurant.minOrderAmount} ETB
-                  </Text>
-                </View>
-                <View style={styles.infoRow}>
-                  <Clock size={16} color={colors.lightText} />
-                  <Text style={styles.infoText}>
-                    Estimated Delivery Time: {restaurant.estimatedDeliveryTime} minutes
-                  </Text>
-                </View>
-              </View>
+            
+            <View style={styles.ratingContainer}>
+              <StarRating rating={restaurant.rating} size={16} showLabel />
+              <Text style={styles.followersText}>
+                {restaurant.followers} followers
+              </Text>
             </View>
+            
+            <View style={styles.locationContainer}>
+              <MapPin size={16} color={colors.lightText} />
+              <Text style={styles.locationText}>{restaurant.location}</Text>
+            </View>
+            
+            {!isOwner && (
+              <Button
+                title={isFollowing ? "Following" : "Follow"}
+                variant={isFollowing ? "outline" : "primary"}
+                size="small"
+                onPress={handleFollow}
+                icon={
+                  isFollowing ? (
+                    <Heart size={16} color={colors.primary} fill={colors.primary} />
+                  ) : (
+                    <Heart size={16} color={colors.white} />
+                  )
+                }
+                style={styles.followButton}
+              />
+            )}
+          </View>
+        </View>
+
+        <View style={styles.descriptionContainer}>
+          <Text style={styles.descriptionText}>{restaurant.description}</Text>
+        </View>
+
+        <View style={styles.contactContainer}>
+          <TouchableOpacity
+            style={styles.contactItem}
+            onPress={handleCall}
+          >
+            <View style={[styles.contactIcon, { backgroundColor: colors.primary + "20" }]}>
+              <Phone size={20} color={colors.primary} />
+            </View>
+            <Text style={styles.contactText}>Call</Text>
+          </TouchableOpacity>
+          
+          {restaurant.email && (
+            <TouchableOpacity
+              style={styles.contactItem}
+              onPress={handleEmail}
+            >
+              <View style={[styles.contactIcon, { backgroundColor: colors.secondary + "20" }]}>
+                <Mail size={20} color={colors.secondary} />
+              </View>
+              <Text style={styles.contactText}>Email</Text>
+            </TouchableOpacity>
+          )}
+          
+          {restaurant.website && (
+            <TouchableOpacity
+              style={styles.contactItem}
+              onPress={handleWebsite}
+            >
+              <View style={[styles.contactIcon, { backgroundColor: colors.accent + "20" }]}>
+                <Globe size={20} color={colors.accent} />
+              </View>
+              <Text style={styles.contactText}>Website</Text>
+            </TouchableOpacity>
           )}
         </View>
+
+        {restaurant.openingHours && (
+          <View style={styles.hoursContainer}>
+            <View style={styles.hoursHeader}>
+              <Clock size={16} color={colors.text} />
+              <Text style={styles.hoursTitle}>Opening Hours</Text>
+            </View>
+            <Text style={styles.hoursText}>{restaurant.openingHours}</Text>
+          </View>
+        )}
+
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "menu" && styles.activeTabButton,
+            ]}
+            onPress={() => setActiveTab("menu")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "menu" && styles.activeTabText,
+              ]}
+            >
+              Menu
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.tabButton,
+              activeTab === "recipes" && styles.activeTabButton,
+            ]}
+            onPress={() => setActiveTab("recipes")}
+          >
+            <Text
+              style={[
+                styles.tabText,
+                activeTab === "recipes" && styles.activeTabText,
+              ]}
+            >
+              Recipes
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {activeTab === "menu" ? (
+          <View style={styles.menuContainer}>
+            {restaurant.menuCategories.map((category) => (
+              <View key={category.id} style={styles.categoryContainer}>
+                <Text style={styles.categoryTitle}>{category.name}</Text>
+                
+                {category.items.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.menuItem}
+                    onPress={() => item.recipeId && handleViewRecipe(item.recipeId)}
+                    disabled={!item.recipeId}
+                  >
+                    {item.imageUrl && (
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={styles.menuItemImage}
+                        contentFit="cover"
+                      />
+                    )}
+                    
+                    <View style={styles.menuItemContent}>
+                      <View style={styles.menuItemHeader}>
+                        <Text style={styles.menuItemName}>{item.name}</Text>
+                        <Text style={styles.menuItemPrice}>{item.price}</Text>
+                      </View>
+                      <Text style={styles.menuItemDescription}>
+                        {item.description}
+                      </Text>
+                      {item.recipeId && (
+                        <Text style={styles.viewRecipeText}>View Recipe</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.recipesContainer}>
+            {restaurantRecipes.length > 0 ? (
+              restaurantRecipes.map((recipe) => (
+                <RecipeCard key={recipe.id} recipe={recipe} />
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyStateTitle}>No recipes shared yet</Text>
+                <Text style={styles.emptyStateText}>
+                  This restaurant hasn't shared any recipes yet
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
-      
-      {/* View cart button */}
-      <View style={styles.footer}>
-        <Button
-          title={cartItemCount > 0 ? `View Cart (${cartItemCount})` : "View Cart"}
-          onPress={() => router.push("/cart")}
-          variant="primary"
-          fullWidth
-        />
-      </View>
     </View>
   );
 }
@@ -487,11 +344,11 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontWeight: "600",
   },
-  imageContainer: {
+  coverContainer: {
     height: 200,
     position: "relative",
   },
-  image: {
+  coverImage: {
     width: "100%",
     height: "100%",
   },
@@ -503,6 +360,9 @@ const styles = StyleSheet.create({
     height: 100,
   },
   backIconButton: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 50 : 20,
+    left: 20,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -510,102 +370,143 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  content: {
+  settingsButton: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 50 : 20,
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerContainer: {
+    flexDirection: "row",
     padding: 20,
+    paddingTop: 0,
   },
-  header: {
-    marginBottom: 16,
+  logoContainer: {
+    marginTop: -40,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: colors.white,
+    backgroundColor: colors.white,
+    elevation: 4,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
-  title: {
-    ...typography.heading1,
-    marginBottom: 8,
+  logo: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  headerContent: {
+    flex: 1,
+    marginLeft: 16,
+    justifyContent: "center",
+  },
+  nameContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  restaurantName: {
+    ...typography.heading3,
+    marginRight: 8,
+  },
+  verifiedBadge: {
+    backgroundColor: colors.success,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  verifiedText: {
+    ...typography.caption,
+    color: colors.white,
+    fontWeight: "600",
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
   },
-  rating: {
+  followersText: {
+    ...typography.caption,
+    color: colors.lightText,
+    marginLeft: 16,
+  },
+  locationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  locationText: {
     ...typography.bodySmall,
-    fontWeight: "600",
+    color: colors.lightText,
     marginLeft: 4,
   },
-  reviewCount: {
+  followButton: {
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+  descriptionContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  descriptionText: {
+    ...typography.body,
+  },
+  contactContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  contactItem: {
+    alignItems: "center",
+  },
+  contactIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  contactText: {
     ...typography.caption,
-    color: colors.lightText,
-    marginLeft: 2,
   },
-  cuisineContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
-  },
-  cuisine: {
-    ...typography.bodySmall,
-    color: colors.lightText,
-  },
-  cuisineDot: {
-    ...typography.bodySmall,
-    color: colors.lightText,
-    marginHorizontal: 4,
-  },
-  priceRange: {
-    ...typography.bodySmall,
-    color: colors.lightText,
-    marginLeft: 8,
-  },
-  metaContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  metaText: {
-    ...typography.caption,
-    color: colors.lightText,
-    marginLeft: 6,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: colors.primary + "20",
+  hoursContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    backgroundColor: colors.white,
+    padding: 16,
     borderRadius: 12,
   },
-  statusText: {
-    ...typography.caption,
-    color: colors.primary,
-    fontWeight: "600",
-  },
-  actions: {
+  hoursHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: colors.divider,
-    marginBottom: 16,
-  },
-  actionButton: {
     alignItems: "center",
+    marginBottom: 8,
   },
-  actionText: {
-    ...typography.caption,
-    marginTop: 4,
+  hoursTitle: {
+    ...typography.bodySmall,
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  hoursText: {
+    ...typography.body,
   },
   tabsContainer: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
-    marginBottom: 16,
   },
   tabButton: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 16,
   },
   activeTabButton: {
     borderBottomWidth: 2,
@@ -620,73 +521,73 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   menuContainer: {
+    padding: 20,
+  },
+  categoryContainer: {
+    marginBottom: 24,
+  },
+  categoryTitle: {
+    ...typography.heading3,
     marginBottom: 16,
   },
-  categoriesContainer: {
-    paddingBottom: 16,
-  },
-  categoryButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: colors.inputBackground,
-    borderRadius: 20,
-    marginRight: 8,
-  },
-  selectedCategoryButton: {
-    backgroundColor: colors.primary,
-  },
-  categoryText: {
-    ...typography.caption,
-    color: colors.text,
-  },
-  selectedCategoryText: {
-    color: colors.white,
-    fontWeight: "600",
-  },
-  menuItemsContainer: {
-    marginBottom: 16,
-  },
-  reviewsContainer: {
-    marginBottom: 16,
-  },
-  emptyReviews: {
-    alignItems: "center",
-    padding: 24,
+  menuItem: {
+    flexDirection: "row",
     backgroundColor: colors.white,
     borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  emptyReviewsTitle: {
-    ...typography.heading4,
+  menuItemImage: {
+    width: 100,
+    height: 100,
+  },
+  menuItemContent: {
+    flex: 1,
+    padding: 12,
+  },
+  menuItemHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
+  menuItemName: {
+    ...typography.bodySmall,
+    fontWeight: "600",
+  },
+  menuItemPrice: {
+    ...typography.bodySmall,
+    fontWeight: "600",
+    color: colors.primary,
+  },
+  menuItemDescription: {
+    ...typography.caption,
+    color: colors.lightText,
+  },
+  viewRecipeText: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: "600",
+    marginTop: 8,
+  },
+  recipesContainer: {
+    padding: 20,
+  },
+  emptyState: {
+    alignItems: "center",
+    padding: 40,
+  },
+  emptyStateTitle: {
+    ...typography.heading3,
     marginBottom: 8,
   },
-  emptyReviewsText: {
+  emptyStateText: {
     ...typography.body,
     color: colors.lightText,
     textAlign: "center",
-  },
-  infoContainer: {
-    marginBottom: 16,
-  },
-  infoSection: {
-    marginBottom: 20,
-  },
-  infoTitle: {
-    ...typography.heading4,
-    marginBottom: 8,
-  },
-  infoText: {
-    ...typography.body,
-    color: colors.text,
-  },
-  infoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  footer: {
-    backgroundColor: colors.white,
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
   },
 });

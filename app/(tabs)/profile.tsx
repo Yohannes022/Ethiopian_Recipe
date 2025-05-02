@@ -10,7 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { Settings, LogOut, Edit2, Grid, Bookmark } from "lucide-react-native";
-import colors from "@/constants/colors";
+import colors from "@/constants/Colors";
 import typography from "@/constants/typography";
 import RecipeCard from "@/components/RecipeCard";
 import { useAuthStore } from "@/store/authStore";
@@ -53,14 +53,17 @@ export default function ProfileScreen() {
   };
 
   const handleEditProfile = () => {
-    // In a real app, this would navigate to a profile edit screen
-    Alert.alert("Edit Profile", "This feature is coming soon!");
+    router.push("/edit-profile");
+  };
+
+  const handleSettings = () => {
+    router.push("/settings");
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity style={styles.iconButton} onPress={handleSettings}>
           <Settings size={24} color={colors.text} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton} onPress={handleLogout}>

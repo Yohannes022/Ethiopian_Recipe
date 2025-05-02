@@ -1,17 +1,22 @@
 // Ethiopian-inspired color palette
+// Instagram-inspired color palette
 export default {
-    primary: "#8E3B46", // Deep red/burgundy
-    secondary: "#D9A566", // Warm gold
-    accent: "#6A8E7F", // Sage green
-    background: "#F9F5F0", // Warm off-white
-    darkBackground: "#2D2D2D", // Dark charcoal
-    text: "#2D2D2D", // Dark charcoal
-    lightText: "#8A8A8A", // Medium gray
-    white: "#FFFFFF",
-    black: "#000000",
-    error: "#E53935",
-    success: "#43A047",
-    divider: "#E0E0E0",
-    cardBackground: "#FFFFFF",
-    inputBackground: "#F5F5F5",
-  };
+  primary: "#0095F6", // Instagram blue
+  secondary: "#8E8E8E", // Instagram secondary gray
+  accent: "#FBAD50", // Instagram orange/amber
+  background: "#FAFAFA", // Instagram light background
+  darkBackground: "#121212", // Instagram dark mode background
+  text: "#262626", // Instagram primary text
+  lightText: "#8E8E8E", // Instagram secondary text
+  white: "#FFFFFF",
+  black: "#000000",
+  error: "#ED4956", // Instagram error/notification red
+  success: "#58C322", // Green for success states
+  divider: "#DBDBDB", // Instagram divider color
+  cardBackground: "#FFFFFF",
+  inputBackground: "#EFEFEF", // Instagram input background
+  adminPrimary: "#0095F6", // Admin features use the same blue
+  adminSecondary: "#5851DB", // Instagram gradient purple
+  ratingYellow: "#FFCC00", // Yellow for ratings
+  commentBg: "#F9F9F9", // Light gray for comment backgrounds
+};
